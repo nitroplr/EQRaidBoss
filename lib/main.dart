@@ -28,13 +28,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'EQ Tick Parser'),
+      home: const MyHomePage(title: 'EQ Raid Boss'),
     );
   }
-
+//C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\windows\runner\main.cpp
+  //set window size there, window title also gets set there
   Future<void> _setWindowSize(BuildContext context) async {
     DesktopWindow.setMinWindowSize(const Size(400, 400));
-    DesktopWindow.setWindowSize(const Size(1000, 600));
+    //DesktopWindow.setWindowSize(const Size(1000, 600));
   }
 }
 
