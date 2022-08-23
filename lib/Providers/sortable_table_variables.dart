@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SortableTableVariableNotifier extends ChangeNotifier {
+class LootsSortableTableVariableNotifier extends ChangeNotifier {
   bool _isAscending = true;
   int _sortColumnIndex = 0;
 
@@ -24,4 +24,4 @@ class SortableTableVariableNotifier extends ChangeNotifier {
   }
 }
 
-final sortableTableVariableProvider = ChangeNotifierProvider((ref) => SortableTableVariableNotifier());
+final lootsSortableTableVariableProvider = ChangeNotifierProvider((ref) => LootsSortableTableVariableNotifier());

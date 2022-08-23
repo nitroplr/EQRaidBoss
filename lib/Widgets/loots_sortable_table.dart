@@ -7,23 +7,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Providers/blocked_items_variables.dart';
 
-class SortableTable extends ConsumerStatefulWidget {
+class LootsSortableTable extends ConsumerStatefulWidget {
   final List<ItemLoot> itemLoots;
   final SharedPreferences prefs;
 
-  const SortableTable({Key? key, required this.itemLoots, required this.prefs}) : super(key: key);
+  const LootsSortableTable({Key? key, required this.itemLoots, required this.prefs}) : super(key: key);
 
   @override
-  SortableTableState createState() => SortableTableState();
+  LootsSortableTableState createState() => LootsSortableTableState();
 }
 
-class SortableTableState extends ConsumerState<SortableTable> {
+class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
 
   @override
   Widget build(BuildContext context) {
     final columns = ['Time', 'Looter', 'Item', 'Dropped By'];
-    bool isAscending = ref.watch(sortableTableVariableProvider).isAscending;
-    int sortColumnIndex = ref.watch(sortableTableVariableProvider).sortColumnIndex;
+    bool isAscending = ref.watch(lootsSortableTableVariableProvider).isAscending;
+    int sortColumnIndex = ref.watch(lootsSortableTableVariableProvider).sortColumnIndex;
     onSort(sortColumnIndex, isAscending);
     return Scaffold(
       body: SingleChildScrollView(
@@ -144,8 +144,8 @@ class SortableTableState extends ConsumerState<SortableTable> {
         }
       });
     }
-    ref.read(sortableTableVariableProvider).sortColumnIndex = columnIndex;
-    ref.read(sortableTableVariableProvider).isAscending = ascending;
+    ref.read(lootsSortableTableVariableProvider).sortColumnIndex = columnIndex;
+    ref.read(lootsSortableTableVariableProvider).isAscending = ascending;
   }
 
   int compareString(bool ascending, String value1, String value2) =>
