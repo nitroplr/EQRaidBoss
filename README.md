@@ -1,16 +1,6 @@
-# eq_raid_boss
+# EQ Raid Boss
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+To use EQ Raid Boss open the installers folder and download the .exe file.  Install the 
+program, then click on the folder in the lower left corner and point to your Everquest directory for the raid tick parser and do the same for your character's log file to use the loot collector.  
+Change the start and end dates to parse loot and raid attendance.  Hit now if you want it to monitor for 
+changes.  Items can be added to the block list with a long press on the item on the Loots tab or by clicking the plus on the blocked items tab and adding new blocked items(1 per line).  Click on the output to copy a summary to clipboard.
