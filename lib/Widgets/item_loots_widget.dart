@@ -6,7 +6,7 @@ import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/item_loots_variables.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
-import 'package:eq_raid_boss/Providers/sortable_table_variables.dart';
+import 'package:eq_raid_boss/Providers/loots_sortable_table_variables.dart';
 import 'package:eq_raid_boss/Widgets/loots_sortable_table.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';

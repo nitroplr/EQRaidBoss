@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'dart:io';
+import 'package:eq_raid_boss/Model/member_tick_info.dart';
 import 'package:eq_raid_boss/Model/tick.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
+import 'package:eq_raid_boss/Widgets/ticks_sortable_table.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -43,6 +45,7 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
     List<Tick> ticks = [];
     _getTicks(ticks);
     String attendance = _getAttendance(ticks);
+    List<MemberTickInfo> memberTickInfo = _getMemberTickInfo(attendance);
     return StreamBuilder<FileSystemEvent>(
         stream: directory!.watch(),
         builder: (context, snapshot) {
@@ -58,36 +61,38 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
                 });
               }
             }
-            return _attendanceView(context, attendance);
+            memberTickInfo = _getMemberTickInfo(attendance);
+            return InkWell(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: attendance));
+                showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
+              },
+              mouseCursor: SystemMouseCursors.basic,
+              child: TicksSortableTable(
+                prefs: widget.prefs,
+                memberTickInfo: memberTickInfo,
+              ),
+            );
           } else if (snapshot.hasError) {
             log(snapshot.error.toString());
             return const SizedBox();
           }
-          return _attendanceView(context, attendance);
+          return InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: attendance));
+              showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
+            },
+            mouseCursor: SystemMouseCursors.basic,
+            child: TicksSortableTable(
+              prefs: widget.prefs,
+              memberTickInfo: memberTickInfo,
+            ),
+          );
         });
   }
 
-  Widget _attendanceView(BuildContext context, String attendance) {
-    return ListView(
-      children: [
-        SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Center(
-            child: InkWell(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: attendance));
-                  showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
-                },
-                child: Text(attendance)),
-          ),
-        )
-      ],
-    );
-  }
-
   void _getLogFiles() {
-    DateTime endTime =
-        ref.read(refreshTicksVariableProvider).endIsNow ? DateTime.now() : widget.end;
+    DateTime endTime = ref.read(refreshTicksVariableProvider).endIsNow ? DateTime.now() : widget.end;
     files.clear();
     raidDumps.clear();
     files = directory!.listSync();
@@ -162,5 +167,24 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
     }
 
     return returnString.toString();
+  }
+
+  List<MemberTickInfo> _getMemberTickInfo(String attendance) {
+    List<MemberTickInfo> memberTickInfo = [];
+    List<String> splitAttendance = attendance.split('\n');
+    for (var memberInfo in splitAttendance) {
+      if (memberInfo.length > 2) {
+        List<String> attendance = [];
+        String memberName = memberInfo.substring(0, memberInfo.indexOf(';'));
+        RegExp regex = RegExp(r'(\d+)');
+        var matches = regex.allMatches(memberInfo);
+        for (var match in matches) {
+          attendance.add(memberInfo.substring(match.start, match.end));
+        }
+        memberTickInfo.add(MemberTickInfo(member: memberName, ticks: attendance));
+      }
+    }
+
+    return memberTickInfo;
   }
 }

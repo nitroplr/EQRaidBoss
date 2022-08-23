@@ -1,5 +1,5 @@
 import 'package:eq_raid_boss/Model/item_loot.dart';
-import 'package:eq_raid_boss/Providers/sortable_table_variables.dart';
+import 'package:eq_raid_boss/Providers/loots_sortable_table_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +27,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     onSort(sortColumnIndex, isAscending);
     return Scaffold(
       body: SingleChildScrollView(
+        controller: ScrollController(),
           physics: const BouncingScrollPhysics(),
           child: SizedBox(
             width: double.maxFinite,
