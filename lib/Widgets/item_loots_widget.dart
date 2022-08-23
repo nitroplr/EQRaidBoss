@@ -38,6 +38,7 @@ class _ItemLootsState extends ConsumerState<ItemLoots> {
     String charFilePath = widget.prefs.getString('characterLogFile')!;
     logFile = File(charFilePath);
     timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      charFilePath = widget.prefs.getString('characterLogFile')!;
       if (charFilePath != '') {
         _buildItemLootsVariables(context);
       }
