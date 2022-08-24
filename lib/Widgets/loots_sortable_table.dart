@@ -83,7 +83,32 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
       widget.itemLoots.sort(
-          (a, b) => compareTime(ascending, a.time.millisecondsSinceEpoch, b.time.millisecondsSinceEpoch));
+          (a, b) {
+            if (ascending) {
+              if (a.time.millisecondsSinceEpoch == b.time.millisecondsSinceEpoch) {
+                if (a.looter == b.looter) {
+                  if (a.item == b.item) {
+                    return a.droppedBy.compareTo(b.droppedBy);
+                  }
+                  return a.item.compareTo(b.item);
+                }
+                return a.looter.compareTo(b.looter);
+              }
+              return a.time.millisecondsSinceEpoch.compareTo(b.time.millisecondsSinceEpoch);
+            }else {
+
+              if (a.time.millisecondsSinceEpoch == b.time.millisecondsSinceEpoch) {
+                if (a.looter == b.looter) {
+                  if (a.item == b.item) {
+                    return a.droppedBy.compareTo(b.droppedBy);
+                  }
+                  return a.item.compareTo(b.item);
+                }
+                return a.looter.compareTo(b.looter);
+              }
+              return b.time.millisecondsSinceEpoch.compareTo(a.time.millisecondsSinceEpoch);
+            }
+          });
     }
     //sort based on looter, then item, then time
     else if (columnIndex == 1) {
@@ -148,11 +173,4 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     ref.read(lootsSortableTableVariableProvider).sortColumnIndex = columnIndex;
     ref.read(lootsSortableTableVariableProvider).isAscending = ascending;
   }
-
-  int compareString(bool ascending, String value1, String value2) =>
-      ascending ? value1.compareTo(value2) : value2.compareTo(value1);
-
-  int compareTime(bool ascending, int millisecondsSinceEpoch, int millisecondsSinceEpoch2) => ascending
-      ? millisecondsSinceEpoch.compareTo(millisecondsSinceEpoch2)
-      : millisecondsSinceEpoch2.compareTo(millisecondsSinceEpoch);
 }
