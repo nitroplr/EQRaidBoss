@@ -29,14 +29,14 @@ class TicksSortableTableState extends ConsumerState<TicksSortableTable> {
     return Scaffold(
       body: SingleChildScrollView(
         controller: ScrollController(),
-          physics: const BouncingScrollPhysics(),
           child: SizedBox(
-            width: double.maxFinite,
-            child: DataTable(
+            width: MediaQuery.of(context).size.width,
+            child: PaginatedDataTable(
+              rowsPerPage: 25,
+              columnSpacing: 10,
               sortAscending: isAscending,
               sortColumnIndex: sortColumnIndex,
-              columns: getColumns(columns),
-              rows: getRows(),
+              columns: getColumns(columns), source: MyData(memberTickInfo: widget.memberTickInfo),
             ),
           )),
     );
@@ -86,4 +86,28 @@ class TicksSortableTableState extends ConsumerState<TicksSortableTable> {
     ref.read(ticksSortableTableVariableProvider).sortColumnIndex = columnIndex;
     ref.read(ticksSortableTableVariableProvider).isAscending = ascending;
   }
+}
+
+class MyData extends DataTableSource{
+  List<MemberTickInfo> memberTickInfo;
+  MyData({required this.memberTickInfo});
+
+  @override
+  DataRow? getRow(int index) {
+    List<DataCell> cells = [DataCell(Text(memberTickInfo[index].member))];
+    memberTickInfo[index].ticks.forEach((tick) {
+      cells.add(DataCell(Text(tick)));
+    });
+    return DataRow(cells: cells);
+  }
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get rowCount => memberTickInfo.length;
+
+  @override
+  int get selectedRowCount => 0;
+
 }
