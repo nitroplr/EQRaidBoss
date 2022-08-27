@@ -1,4 +1,6 @@
+import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
+import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,6 +42,13 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
       body: ListView.builder(controller: ScrollController(),itemCount: blockedItems.length, itemBuilder:
           (BuildContext context, int index) {
         return TextButton(onPressed: () {}, child: Text(blockedItems[index]), onLongPress: () {
+          List<ItemLoot> allItems = ref.read(charLogFileVariableProvider).allItemLootsInRange;
+          allItems.forEach((itemLoot) {
+            if (itemLoot.item == blockedItems[index]) {
+              ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
+            }
+          });
+          ref.read(charLogFileVariableProvider).itemLoots =ref.read(charLogFileVariableProvider).itemLoots;
           blockedItems.removeWhere((element) => element == blockedItems[index]);
           widget.prefs.setStringList('blockedItems', blockedItems);
           blockedVariables.blockedItems = blockedItems;

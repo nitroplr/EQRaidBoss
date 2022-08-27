@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:eq_raid_boss/Model/member_tick_info.dart';
 import 'package:eq_raid_boss/Model/tick.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
-import 'package:eq_raid_boss/Widgets/ticks_sortable_table.dart';
+import 'package:eq_raid_boss/Widgets/Tables/ticks_sortable_table.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

@@ -6,17 +6,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CharLogFileVariableNotifier extends ChangeNotifier {
   List<ItemLoot> _itemLoots = [];
+  List<ItemLoot> _allItemLootsInRange = [];
   List<PlatParcel> _platParcels = [];
   int _byteOffset = 0;
   bool _isProcessing = false;
 
   List<ItemLoot> get itemLoots => _itemLoots;
+  List<ItemLoot> get allItemLootsInRange => _allItemLootsInRange;
   List<PlatParcel> get platParcels => _platParcels;
   int get byteOffset => _byteOffset;
   bool get  isProcessing=> _isProcessing;
 
   set itemLoots(List<ItemLoot> loots) {
     _itemLoots = loots;
+    notifyListeners();
+  }
+
+  set allItemLootsInRange(List<ItemLoot> loots) {
+    _allItemLootsInRange = loots;
     notifyListeners();
   }
 
@@ -36,8 +43,7 @@ class CharLogFileVariableNotifier extends ChangeNotifier {
     _isProcessing = isProcessing;
   }
 
-  void updateOffsetLootsParcels(int offset, List<ItemLoot> loots, List<PlatParcel> parcels){
-    _itemLoots = loots;
+  void updateOffsetAndParcels(int offset, List<PlatParcel> parcels){
     _byteOffset = offset;
     _platParcels = parcels;
     notifyListeners();

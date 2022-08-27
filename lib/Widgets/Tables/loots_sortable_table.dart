@@ -1,26 +1,27 @@
 import 'package:eq_raid_boss/Model/item_loot.dart';
+import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/Providers/loots_sortable_table_variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../Providers/blocked_items_variables.dart';
+import '../../Providers/blocked_items_variables.dart';
 
 class LootsSortableTable extends ConsumerStatefulWidget {
-  final List<ItemLoot> itemLoots;
   final SharedPreferences prefs;
 
-  const LootsSortableTable({Key? key, required this.itemLoots, required this.prefs}) : super(key: key);
+  const LootsSortableTable({Key? key, required this.prefs}) : super(key: key);
 
   @override
   LootsSortableTableState createState() => LootsSortableTableState();
 }
 
 class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
-
+  List<ItemLoot> itemLoots = [];
   @override
   Widget build(BuildContext context) {
+    itemLoots = ref.watch(charLogFileVariableProvider).itemLoots;
     final columns = ['Time', 'Looter', 'Item', 'Dropped By'];
     bool isAscending = ref.watch(lootsSortableTableVariableProvider).isAscending;
     int sortColumnIndex = ref.watch(lootsSortableTableVariableProvider).sortColumnIndex;
@@ -35,7 +36,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
               sortAscending: isAscending,
               sortColumnIndex: sortColumnIndex,
               columns: getColumns(columns),
-              rows: getRows(),
+              rows: getRows(itemLoots),
             ),
           )),
     );
@@ -48,7 +49,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
           ))
       .toList();
 
-  List<DataRow> getRows() => widget.itemLoots.map((ItemLoot itemLoot) {
+  List<DataRow> getRows(List<ItemLoot> itemLoots) => itemLoots.map((ItemLoot itemLoot) {
         return DataRow(cells: [
           DataCell(Text(DateFormat('EEE, MMM d, h:mm a').format(itemLoot.time))),
           DataCell(Text(itemLoot.looter)),
@@ -62,6 +63,8 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
                 List<String> blockedItems = ref.read(blockedItemsVariableProvider).blockedItems;
                 blockedItems.add(itemLoot.item);
                 blockedItems.sort();
+                ref.read(charLogFileVariableProvider).itemLoots.removeWhere((element) => element.item ==
+                    itemLoot.item);
                 ref.read(blockedItemsVariableProvider).blockedItems = blockedItems;
                 widget.prefs.setStringList('blockedItems', blockedItems);
               },
@@ -82,7 +85,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
 
   void onSort(int columnIndex, bool ascending) {
     if (columnIndex == 0) {
-      widget.itemLoots.sort(
+      itemLoots.sort(
           (a, b) {
             if (ascending) {
               if (a.time.millisecondsSinceEpoch == b.time.millisecondsSinceEpoch) {
@@ -112,7 +115,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     }
     //sort based on looter, then item, then time
     else if (columnIndex == 1) {
-      widget.itemLoots.sort((a, b) {
+      itemLoots.sort((a, b) {
         if (ascending) {
           if (a.looter == b.looter) {
             if (a.item == b.item) {
@@ -134,7 +137,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     }
     //sort based on item, then time
     else if (columnIndex == 2) {
-      widget.itemLoots.sort((a, b) {
+      itemLoots.sort((a, b) {
         if (ascending) {
           if (a.item == b.item) {
             return a.time.millisecondsSinceEpoch.compareTo(b.time.millisecondsSinceEpoch);
@@ -150,7 +153,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     }
     //sort based on dropper, then time
     else if (columnIndex == 3) {
-      widget.itemLoots.sort((a, b) {
+      itemLoots.sort((a, b) {
         if (ascending) {
           if (a.droppedBy == b.droppedBy) {
             if (a.time.millisecondsSinceEpoch == b.time.millisecondsSinceEpoch) {

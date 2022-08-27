@@ -7,7 +7,7 @@ import 'package:desktop_window/desktop_window.dart';
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Model/plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
-import 'package:eq_raid_boss/Providers/item_loots_variables.dart';
+import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
 import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
@@ -329,10 +329,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         startOffset = 0;
       }
       int endOffset = fileLength + 1;
-      List<ItemLoot> itemLoots = [];
       List<PlatParcel> parcels = [];
+      List<String> newItemLines = [];
       await Future.doWhile(() async {
-        List<String> newItemLines = [];
         Stream<String> lines = logFile!
             .openRead(startOffset, endOffset)
             .transform(utf8.decoder) // Decode bytes to UTF-8.
@@ -384,7 +383,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 var matches = regex.allMatches(line).toList();
                 amount = int.parse(
                     line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
-                parcels.add(PlatParcel(sender: sender, amount: amount));
+                parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
               }
             }
           }
@@ -402,16 +401,14 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             startOffset = 0;
           }
         }
-        List<ItemLoot> newItemLoots = _buildItemLoots(itemLines: newItemLines);
-        newItemLoots.addAll(itemLoots);
-        itemLoots = newItemLoots;
         if (startOffset >= 0) {
           return true;
         } else {
           return false;
         }
       });
-      ref.read(charLogFileVariableProvider).updateOffsetLootsParcels(fileLength, itemLoots, parcels);
+      _buildItemLoots(itemLines: newItemLines);
+      ref.read(charLogFileVariableProvider).updateOffsetAndParcels(fileLength, parcels);
       ref.read(charLogFileVariableProvider).isProcessing = false;
     }
   }
@@ -420,7 +417,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     if (ref.read(charLogFileVariableProvider).isProcessing == false) {
       ref.read(charLogFileVariableProvider).isProcessing = true;
       int byteOffSet = ref.read(charLogFileVariableProvider).byteOffset;
-      List<ItemLoot> itemLoots = ref.read(charLogFileVariableProvider).itemLoots;
+      List<String> newLines = [];
       List<PlatParcel> parcels = ref.read(charLogFileVariableProvider).platParcels;
       Stream<String> lines = logFile!
           .openRead(byteOffSet)
@@ -443,12 +440,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               String numberForward = lootMessage.substring(indexOfNumber);
               line.replaceFirst(RegExp(r' \d+ '), ' a ');
               for (int i = 0; i < int.parse(numberForward.substring(0, numberForward.indexOf(' '))); i++) {
-                List<ItemLoot> newLoots = _buildItemLoots(itemLines: [line]);
-                itemLoots.addAll(newLoots);
+                newLines.add(line);
               }
             } else {
-              List<ItemLoot> newLoots = _buildItemLoots(itemLines: [line]);
-              itemLoots.addAll(newLoots);
+              newLines.add(line);
             }
           }
           //parcel lines
@@ -459,17 +454,17 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             String sender = line.substring(line.indexOf('that was sent from ') + 19, line.length - 1);
             RegExp regex = RegExp(r'(\d+)');
             var matches = regex.allMatches(line).toList();
-            amount = int.parse(
-                line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
-            parcels.add(PlatParcel(sender: sender, amount: amount));
+            amount =
+                int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
+            parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
           }
         }
         log('File is now closed. ${logFile!.lengthSync()}');
-        ref.read(charLogFileVariableProvider).itemLoots = itemLoots;
         ref.read(charLogFileVariableProvider).platParcels = parcels;
       } catch (e) {
         log('Error: $e');
       }
+      _buildItemLoots(itemLines: newLines);
       ref.read(charLogFileVariableProvider).byteOffset = fileLength;
       ref.read(charLogFileVariableProvider).isProcessing = false;
     }
@@ -500,8 +495,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     return DateTime.parse('$year-$month-$day $time');
   }
 
-  List<ItemLoot> _buildItemLoots({required List<String> itemLines}) {
-    List<ItemLoot> itemLoots = [];
+  void _buildItemLoots({required List<String> itemLines}) {
+    List<ItemLoot> filteredItemLoots = [];
+    List<ItemLoot> allItemLoots = [];
     for (var line in itemLines) {
       //time
       DateTime time = _getLineTime(line: line);
@@ -535,11 +531,16 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       droppedBy = droppedBy.substring(droppedBy.indexOf('from '));
       droppedBy = droppedBy.substring(5, droppedBy.indexOf('.'));
 
+      ItemLoot itemLoot =
+          ItemLoot(time: time, looter: looter, quantity: quantity, item: item, droppedBy: droppedBy);
       if (!blocked) {
-        itemLoots
-            .add(ItemLoot(time: time, looter: looter, quantity: quantity, item: item, droppedBy: droppedBy));
+        filteredItemLoots.add(itemLoot);
       }
+      allItemLoots.add(itemLoot);
     }
-    return itemLoots;
+    filteredItemLoots.addAll(ref.read(charLogFileVariableProvider).itemLoots);
+    ref.read(charLogFileVariableProvider).itemLoots = filteredItemLoots;
+    allItemLoots.addAll(ref.read(charLogFileVariableProvider).allItemLootsInRange);
+    ref.read(charLogFileVariableProvider).allItemLootsInRange = allItemLoots;
   }
 }

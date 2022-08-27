@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:eq_raid_boss/Model/item_loot.dart';
-import 'package:eq_raid_boss/Providers/item_loots_variables.dart';
+import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Providers/loots_sortable_table_variables.dart';
-import 'package:eq_raid_boss/Widgets/loots_sortable_table.dart';
+import 'package:eq_raid_boss/Widgets/Tables/loots_sortable_table.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,7 +56,6 @@ class _ItemLootsState extends ConsumerState<ItemLoots> {
             },
             mouseCursor: SystemMouseCursors.basic,
             child: LootsSortableTable(
-              itemLoots: lootsAsyncValue.itemLoots,
               prefs: widget.prefs,
             ),
           );
