@@ -64,7 +64,17 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
             memberTickInfo = _getMemberTickInfo(attendance);
             return InkWell(
               onTap: () {
-                Clipboard.setData(ClipboardData(text: attendance));
+                StringBuffer summary = StringBuffer('Player;');
+                for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
+                  summary.write(i + 1);
+                  if (i < memberTickInfo[0].ticks.length - 1) {
+                    summary.write(';');
+                  }
+                }
+                summary.writeln();
+                summary.write(attendance);
+
+                Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
                 showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
               },
               mouseCursor: SystemMouseCursors.basic,
@@ -79,7 +89,16 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
           }
           return InkWell(
             onTap: () {
-              Clipboard.setData(ClipboardData(text: attendance));
+              StringBuffer summary = StringBuffer('Player;');
+              for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
+                summary.write(i + 1);
+                if (i < memberTickInfo[0].ticks.length - 1) {
+                  summary.write(';');
+                }
+              }
+              summary.writeln();
+              summary.write(attendance);
+              Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
               showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
             },
             mouseCursor: SystemMouseCursors.basic,
