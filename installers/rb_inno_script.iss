@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "EQ Raid Boss"
-#define MyAppVersion "1.5"
+#define MyAppVersion "1.0.7"
 #define MyAppPublisher "Raid Builder"
 #define MyAppURL "https://raidbuilder.app/#/"
 #define MyAppExeName "eq_raid_boss.exe"
@@ -22,9 +22,9 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\installers
+OutputDir=C:\Users\nitro\IdeaProjects\EQRaidBoss\installers
 OutputBaseFilename=eq_raid_boss
-SetupIconFile=C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\windows\runner\resources\app_icon.ico
+SetupIconFile=C:\Users\nitro\IdeaProjects\EQRaidBoss\windows\runner\resources\app_icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -36,10 +36,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\build\windows\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\build\windows\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\build\windows\runner\Release\desktop_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\build\windows\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\nitro\IdeaProjects\EQRaidBoss\build\windows\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\nitro\IdeaProjects\EQRaidBoss\build\windows\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\nitro\IdeaProjects\EQRaidBoss\build\windows\runner\Release\desktop_window_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\nitro\IdeaProjects\EQRaidBoss\build\windows\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

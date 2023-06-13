@@ -47,22 +47,30 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
             controller: ScrollController(),
             itemCount: blockedItems.length,
             itemBuilder: (BuildContext context, int index) {
-              return TextButton(
-                onPressed: () {},
-                child: Text(blockedItems[index]),
-                onLongPress: () {
-                  List<ItemLoot> allItems = ref.read(charLogFileVariableProvider).allItemLootsInRange;
-                  allItems.forEach((itemLoot) {
-                    if (itemLoot.item == blockedItems[index]) {
-                      ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
-                    }
-                  });
-                  ref.read(charLogFileVariableProvider).itemLoots =
-                      ref.read(charLogFileVariableProvider).itemLoots;
-                  blockedItems.removeWhere((element) => element == blockedItems[index]);
-                  widget.prefs.setStringList('blockedItems', blockedItems);
-                  blockedVariables.blockedItems = blockedItems;
-                },
+              return Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(blockedItems[index]),
+                      onLongPress: () {
+                        List<ItemLoot> allItems = ref.read(charLogFileVariableProvider).allItemLootsInRange;
+                        for (var itemLoot in allItems) {
+                          if (itemLoot.item == blockedItems[index]) {
+                            ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
+                          }
+                        }
+                        ref.read(charLogFileVariableProvider).itemLoots =
+                            ref.read(charLogFileVariableProvider).itemLoots;
+                        blockedItems.removeWhere((element) => element == blockedItems[index]);
+                        widget.prefs.setStringList('blockedItems', blockedItems);
+                        blockedVariables.blockedItems = blockedItems;
+                      },
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -96,7 +104,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                     children: [
                       TextField(
                         controller: blockListInputController,
-                        style: Theme.of(context).textTheme.bodyText2,
+                        style: Theme.of(context).textTheme.bodyMedium,
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
                         decoration: const InputDecoration(
@@ -117,7 +125,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                             widget.prefs.setStringList('blockedItems', blocked.toList());
                             Navigator.pop(context);
                           },
-                          child: Text('Block')),
+                          child: const Text('Block')),
                     ],
                   ),
                 ),

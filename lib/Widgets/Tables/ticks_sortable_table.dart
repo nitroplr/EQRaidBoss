@@ -51,9 +51,9 @@ class TicksSortableTableState extends ConsumerState<TicksSortableTable> {
 
   List<DataRow> getRows() => widget.memberTickInfo.map((MemberTickInfo memberTickInfo) {
         List<DataCell> cells = [DataCell(Text(memberTickInfo.member))];
-        memberTickInfo.ticks.forEach((tick) {
+        for (var tick in memberTickInfo.ticks) {
           cells.add(DataCell(Text(tick)));
-        });
+        }
         return DataRow(cells: cells);
       }).toList();
 
@@ -95,9 +95,9 @@ class MyData extends DataTableSource{
   @override
   DataRow? getRow(int index) {
     List<DataCell> cells = [DataCell(Text(memberTickInfo[index].member))];
-    memberTickInfo[index].ticks.forEach((tick) {
+    for (var tick in memberTickInfo[index].ticks) {
       cells.add(DataCell(Text(tick)));
-    });
+    }
     return DataRow(cells: cells);
   }
 

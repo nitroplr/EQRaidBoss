@@ -16,13 +16,14 @@ class PlatParcelsTable extends ConsumerStatefulWidget {
 }
 
 class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
+  NumberFormat numberFormat = NumberFormat.decimalPattern();
   @override
   Widget build(BuildContext context) {
     List<PlatParcel> parcels = ref.watch(charLogFileVariableProvider).platParcels;
     int total = 0;
-    parcels.forEach((element) {
+    for (var element in parcels) {
       total += element.amount;
-    });
+    }
     final columns = ['Time', 'Sender', '$total'];
     parcels.sort((a, b) {
       if (a.sender == b.sender) {
@@ -65,7 +66,7 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
           DataCell(Text(parcel.sender)),
           DataCell(
             Text(
-              parcel.amount.toString(),
+              numberFormat.format(parcel.amount),
             ),
           ),
         ]);
@@ -74,18 +75,22 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
   List<DataCell> getCells(List<dynamic> cells) => cells.map((data) {
         var potentialDate = int.tryParse(data.toString());
         if (potentialDate != null) {
-          return DataCell(Text(
-              DateFormat('EEE, MMM d, h:mm a').format(DateTime.fromMillisecondsSinceEpoch(potentialDate))));
+          return DataCell(
+              Text(DateFormat('EEE, MMM d, h:mm a').format(DateTime.fromMillisecondsSinceEpoch(potentialDate))));
         }
         return DataCell(Text('$data'));
       }).toList();
 
+  ///parcels must be sorted
   void _outputParcelSummary({required List<PlatParcel> parcels}) {
-    StringBuffer output = StringBuffer('Time;Sender;Plat Sent\n');
+    StringBuffer output = StringBuffer('Sender;Plat Sent\n');
+    Map<String, int> memberTotals = {};
     for (var parcel in parcels) {
-      output.writeln(
-          '${DateFormat('EEE, MMM d, h:mm a').format(parcel.time)};${parcel.sender};${parcel.amount}');
+      memberTotals.update(parcel.sender, (value) => (parcel.amount + value), ifAbsent: () => parcel.amount);
+      output.writeln('${parcel.sender};${numberFormat.format(parcel.amount)}');
     }
+    output.writeln('\nSender;Total Sent');
+    memberTotals.forEach((key, value) {output.writeln('$key;${numberFormat.format(value)}');});
 
     Clipboard.setData(ClipboardData(text: output.toString()));
     showSnackBar(context: context, message: 'Parcel summary copied to clipboard.');

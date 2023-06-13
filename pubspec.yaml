@@ -36,9 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   shared_preferences: ^2.0.15
   path_provider: ^2.0.11
-  flutter_riverpod: ^1.0.4
+  flutter_riverpod: ^2.3.6
   desktop_window: ^0.4.0
-  intl: ^0.17.0
+  intl: ^0.18.1
   file_picker: ^5.0.1
 
 dev_dependencies:

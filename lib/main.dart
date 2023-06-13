@@ -13,6 +13,7 @@ import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
 import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
 import 'package:eq_raid_boss/Widgets/item_loots_widget.dart';
 import 'package:eq_raid_boss/Widgets/plat_parcels.dart';
+import 'package:eq_raid_boss/globals.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -162,12 +163,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       children: [
         Text(
           startTime,
-          style: Theme.of(context).textTheme.headline6,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         ElevatedButton(
             onPressed: () {
-              _selectDate(context: context, isEnd: false)
-                  .then((value) => _selectTime(context: context, isEnd: false));
+              _selectDate(context: context, isEnd: false).then((value) => _selectTime(context: context, isEnd: false));
             },
             child: const Text('Start')),
       ],
@@ -180,7 +180,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       children: [
         Text(
           endTime,
-          style: Theme.of(context).textTheme.headline6,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -218,7 +218,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       children: [
         IconButton(
             onPressed: () async {
-              String? result = await FilePicker.platform.getDirectoryPath();
+              String? result = await FilePicker.platform.getDirectoryPath().then((value) {
+                refreshData(ref: ref);
+                return value;
+              });
               if (result != null) {
                 prefs.setString('eqDirectory', result);
               }
@@ -236,7 +239,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       children: [
         IconButton(
             onPressed: () async {
-              FilePickerResult? result = await FilePicker.platform.pickFiles(allowedExtensions: ['.txt']);
+              FilePickerResult? result = await FilePicker.platform.pickFiles(allowedExtensions: ['.txt']).then((value) {
+                refreshData(ref: ref);
+                return value;
+              });
               if (result != null) {
                 prefs.setString('characterLogFile', result.files[0].path!);
               }
@@ -284,7 +290,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     );
     if (picked != null) {
       if (isEnd) {
-        ref.read(refreshTicksVariableProvider).refresh = true;
         ref.read(refreshTicksVariableProvider).endIsNow = false;
         setState(() {
           int milliSeconds = (1000 * 60 * 60 * picked.hour) + (1000 * 60 * picked.minute);
@@ -292,16 +297,13 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           endTime = DateFormat('EEE, MMM d y, h:mm a').format(end);
         });
       } else {
-        ref.read(refreshTicksVariableProvider).refresh = true;
         setState(() {
           int milliSeconds = (1000 * 60 * 60 * picked.hour) + (1000 * 60 * picked.minute);
           start = DateTime.fromMillisecondsSinceEpoch(start.millisecondsSinceEpoch + milliSeconds);
           startTime = DateFormat('EEE, MMM d y, h:mm a').format(start);
         });
       }
-      ref.read(charLogFileVariableProvider).byteOffset = 0;
-      ref.read(charLogFileVariableProvider).itemLoots = [];
-      ref.read(charLogFileVariableProvider).platParcels = [];
+      refreshData(ref: ref);
     }
   }
 
@@ -364,9 +366,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 if (indexOfNumber != -1) {
                   String numberForward = lootMessage.substring(indexOfNumber);
                   line.replaceFirst(RegExp(r' \d+ '), ' a ');
-                  for (int i = 0;
-                      i < int.parse(numberForward.substring(0, numberForward.indexOf(' ')));
-                      i++) {
+                  for (int i = 0; i < int.parse(numberForward.substring(0, numberForward.indexOf(' '))); i++) {
                     newItemLines.add(line);
                   }
                 } else {
@@ -381,8 +381,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 String sender = line.substring(line.indexOf('that was sent from ') + 19, line.length - 1);
                 RegExp regex = RegExp(r'(\d+)');
                 var matches = regex.allMatches(line).toList();
-                amount = int.parse(
-                    line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
+                amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
                 parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
               }
             }
@@ -429,8 +428,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             log(line);
           }
           DateTime lineTime = _getLineTime(line: line);
-          if ((line.contains(RegExp(r'--You have looted .*--')) ||
-                  line.contains(RegExp(r'--.* has looted .*--'))) &&
+          if ((line.contains(RegExp(r'--You have looted .*--')) || line.contains(RegExp(r'--.* has looted .*--'))) &&
               (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
               (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
             //handle multiple items dropping
@@ -454,8 +452,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             String sender = line.substring(line.indexOf('that was sent from ') + 19, line.length - 1);
             RegExp regex = RegExp(r'(\d+)');
             var matches = regex.allMatches(line).toList();
-            amount =
-                int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
+            amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
             parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
           }
         }
@@ -486,8 +483,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       'Dec': '12',
     };
     String lineTime = line.substring(1, line.indexOf(']'));
-    String time =
-        lineTime.substring(lineTime.indexOf(RegExp(r'\d\d:')), lineTime.indexOf(RegExp(r' \d\d\d\d')));
+    String time = lineTime.substring(lineTime.indexOf(RegExp(r'\d\d:')), lineTime.indexOf(RegExp(r' \d\d\d\d')));
     String year = lineTime.substring(lineTime.indexOf(RegExp(r'\d\d\d\d')));
     String month = months[lineTime.substring(4, 7)]!;
     String day = lineTime.substring(8, 10);
@@ -503,8 +499,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       DateTime time = _getLineTime(line: line);
       String charLogFile = prefs!.getString('characterLogFile')!;
       int underscoreIndex = charLogFile.indexOf('_');
-      String thisPlayerName =
-          charLogFile.substring(underscoreIndex + 1, charLogFile.indexOf('_', underscoreIndex + 1));
+      String thisPlayerName = charLogFile.substring(underscoreIndex + 1, charLogFile.indexOf('_', underscoreIndex + 1));
       String lootMessage = line.substring(line.indexOf('--'));
       //looter
       String looter = lootMessage.substring(2, lootMessage.indexOf(' '));
@@ -531,8 +526,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       droppedBy = droppedBy.substring(droppedBy.indexOf('from '));
       droppedBy = droppedBy.substring(5, droppedBy.indexOf('.'));
 
-      ItemLoot itemLoot =
-          ItemLoot(time: time, looter: looter, quantity: quantity, item: item, droppedBy: droppedBy);
+      ItemLoot itemLoot = ItemLoot(time: time, looter: looter, quantity: quantity, item: item, droppedBy: droppedBy);
       if (!blocked) {
         filteredItemLoots.add(itemLoot);
       }
