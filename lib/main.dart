@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:desktop_window/desktop_window.dart';
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Model/plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
@@ -12,6 +11,7 @@ import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
 import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
 import 'package:eq_raid_boss/Widgets/item_loots_widget.dart';
+import 'package:eq_raid_boss/Widgets/parcel_sender/parcel_sender.dart';
 import 'package:eq_raid_boss/Widgets/plat_parcels.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:file_picker/file_picker.dart';
@@ -19,8 +19,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -30,7 +33,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    _setWindowSize(context);
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -38,13 +40,6 @@ class MyApp extends StatelessWidget {
       ),
       home: const MyHomePage(title: 'EQ Raid Boss'),
     );
-  }
-
-//C:\Users\nitro\Desktop\EQ Raid Boss\eq_raid_boss\windows\runner\main.cpp
-  //set window size there, window title also gets set there
-  Future<void> _setWindowSize(BuildContext context) async {
-    DesktopWindow.setMinWindowSize(const Size(400, 400));
-    //DesktopWindow.setWindowSize(const Size(1000, 600));
   }
 }
 
@@ -108,24 +103,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                     ],
                   ),
                   DefaultTabController(
-                      length: 4,
+                      length: 5,
+                      initialIndex: 4,
                       child: Expanded(
                         child: Scaffold(
                           appBar: const TabBar(
                             labelColor: Colors.black,
                             tabs: [
-                              Tab(
-                                icon: Text('Loots'),
-                              ),
-                              Tab(
-                                icon: Text('Blocked'),
-                              ),
-                              Tab(
-                                icon: Text('Ticks'),
-                              ),
-                              Tab(
-                                icon: Text('Plat Parcels'),
-                              ),
+                              Tab(icon: Text('Loots')),
+                              Tab(icon: Text('Blocked')),
+                              Tab(icon: Text('Ticks')),
+                              Tab(icon: Text('Plat Parcels')),
+                              Tab(icon: Text('Parcel Sender'))
                             ],
                           ),
                           body: TabBarView(children: [
@@ -141,6 +130,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                               end: end,
                             ),
                             PlatParcels(prefs: prefs!),
+                            ParcelSender(prefs: prefs!),
                           ]),
                         ),
                       )),
@@ -212,25 +202,19 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     );
   }
 
-  Row _eqFolder(SharedPreferences prefs) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        IconButton(
-            onPressed: () async {
-              String? result = await FilePicker.platform.getDirectoryPath().then((value) {
-                refreshData(ref: ref);
-                return value;
-              });
-              if (result != null) {
-                prefs.setString('eqDirectory', result);
-              }
-              setState(() {});
-            },
-            icon: const Icon(Icons.folder)),
-        Text('EQ Folder: ${prefs.get('eqDirectory')}'),
-      ],
-    );
+  Widget _eqFolder(SharedPreferences prefs) {
+    return Row(children: [IconButton(
+        onPressed: () async {
+          String? result = await FilePicker.platform.getDirectoryPath().then((value) {
+            refreshData(ref: ref);
+            return value;
+          });
+          if (result != null) {
+            prefs.setString('eqDirectory', result);
+          }
+          setState(() {});
+        },
+        icon: const Icon(Icons.folder)), Text('EQ Folder: ${prefs.get('eqDirectory')}')],);
   }
 
   Row _characterLogFile(SharedPreferences prefs) {

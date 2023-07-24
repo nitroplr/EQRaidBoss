@@ -23,3 +23,30 @@ void refreshData({required WidgetRef ref}){
   ref.read(charLogFileVariableProvider).platParcels = [];
   ref.read(refreshTicksVariableProvider).refresh = true;
 }
+
+Future<void> showAnimatedDialog(Widget dialog, BuildContext context, [bool? barrierDismissable]) {
+  return showGeneralDialog(
+    barrierColor: Colors.blueGrey.withOpacity(0.25),
+    barrierDismissible: barrierDismissable ?? true,
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    context: context,
+    pageBuilder: (ctx, a1, a2) {
+      return dialog;
+    },
+    transitionBuilder: (ctx, a1, a2, child) {
+      var curve = Curves.easeOutCubic.transform(a1.value) - 1.0;
+      return Transform(
+        transform: Matrix4.translationValues(0.0, curve * 400, 0.0),
+        child: child,
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 500),
+  );
+}
+
+
+void popNavigatorContext({required BuildContext context}) {
+  if (context.mounted) {
+    Navigator.of(context).pop();
+  }
+}
