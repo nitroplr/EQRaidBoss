@@ -1,5 +1,7 @@
 # EQ Raid Boss
 
+EQ Raid boss is a loot collector with a sharable block list, a basic raid dump parser, a plat parcels received parser, and a plat parcel sender for Everquest.
+
 To use EQ Raid Boss, open the installers folder and download the .exe file.  Install the 
 program, then click on the folders in the lower left corner and point to your Everquest directory for the raid tick parser and do the same for your character's log file to use the loot collector, plat parcels received, and the plat parcel sender.
 
