@@ -50,3 +50,6 @@ void popNavigatorContext({required BuildContext context}) {
     Navigator.of(context).pop();
   }
 }
+const int parcelDialogDelay = 5;
+
+const int twoMil = 2000000;

@@ -5,8 +5,10 @@ import 'dart:io';
 
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Model/plat_parcel.dart';
+import 'package:eq_raid_boss/Model/sent_plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
+import 'package:eq_raid_boss/Providers/parcel_sender_provider.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
 import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
@@ -19,11 +21,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+  await windowManager.setSize(const Size(1300, 1000));
+  await windowManager.setMinimumSize(const Size(500, 500));
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -203,18 +208,23 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   }
 
   Widget _eqFolder(SharedPreferences prefs) {
-    return Row(children: [IconButton(
-        onPressed: () async {
-          String? result = await FilePicker.platform.getDirectoryPath().then((value) {
-            refreshData(ref: ref);
-            return value;
-          });
-          if (result != null) {
-            prefs.setString('eqDirectory', result);
-          }
-          setState(() {});
-        },
-        icon: const Icon(Icons.folder)), Text('EQ Folder: ${prefs.get('eqDirectory')}')],);
+    return Row(
+      children: [
+        IconButton(
+            onPressed: () async {
+              String? result = await FilePicker.platform.getDirectoryPath().then((value) {
+                refreshData(ref: ref);
+                return value;
+              });
+              if (result != null) {
+                prefs.setString('eqDirectory', result);
+              }
+              setState(() {});
+            },
+            icon: const Icon(Icons.folder)),
+        Expanded(child: Text('EQ Folder: ${prefs.get('eqDirectory')}', overflow: TextOverflow.ellipsis))
+      ],
+    );
   }
 
   Row _characterLogFile(SharedPreferences prefs) {
@@ -233,7 +243,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               setState(() {});
             },
             icon: const Icon(Icons.folder)),
-        Text('Character Log File: ${prefs.get('characterLogFile')}'),
+        Expanded(child: Text('Character Log File: ${prefs.get('characterLogFile')}',overflow: TextOverflow.ellipsis)),
       ],
     );
   }
@@ -316,6 +326,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       }
       int endOffset = fileLength + 1;
       List<PlatParcel> parcels = [];
+      List<SentPlatParcel> sentParcels = [];
       List<String> newItemLines = [];
       await Future.doWhile(() async {
         Stream<String> lines = logFile!
@@ -367,6 +378,15 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 var matches = regex.allMatches(line).toList();
                 amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
                 parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
+              }if (line.contains(RegExp(r"^\[.*\].* told you, 'I will deliver the Money \(\d+p\) to .* as soon as possible!'$")) &&
+                  (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
+                  (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
+                int amount = 0;
+                String receiver = line.substring(line.indexOf(') to ') + 5, line.indexOf(' as soon as possible!'));
+                RegExp regex = RegExp(r'(\d+)');
+                var matches = regex.allMatches(line).toList();
+                amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
+                sentParcels.add(SentPlatParcel(receiver: receiver, amount: amount, time: lineTime, id: const Uuid().v4()));
               }
             }
           }
@@ -391,7 +411,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         }
       });
       _buildItemLoots(itemLines: newItemLines);
-      ref.read(charLogFileVariableProvider).updateOffsetAndParcels(fileLength, parcels);
+      ref.read(charLogFileVariableProvider).updateOffsetAndParcels(offset: fileLength, parcels: parcels, sentParcels: sentParcels);
       ref.read(charLogFileVariableProvider).isProcessing = false;
     }
   }
@@ -402,6 +422,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       int byteOffSet = ref.read(charLogFileVariableProvider).byteOffset;
       List<String> newLines = [];
       List<PlatParcel> parcels = ref.read(charLogFileVariableProvider).platParcels;
+      List<SentPlatParcel> sentParcels = ref.read(charLogFileVariableProvider).sentPlatParcels;
       Stream<String> lines = logFile!
           .openRead(byteOffSet)
           .transform(utf8.decoder) // Decode bytes to UTF-8.
@@ -438,6 +459,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             var matches = regex.allMatches(line).toList();
             amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
             parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
+          }if (line.contains(RegExp(r"^\[.*\].* told you, 'I will deliver the Money \(\d+p\) to .* as soon as possible!'$")) &&
+              (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
+              (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
+            int amount = 0;
+            String receiver = line.substring(line.indexOf(') to ') + 5, line.indexOf(' as soon as possible!'));
+            RegExp regex = RegExp(r'(\d+)');
+            var matches = regex.allMatches(line).toList();
+            amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
+            SentPlatParcel sentPlatParcel =SentPlatParcel(id: const Uuid().v4(),receiver: receiver, amount: amount, time: lineTime);
+            sentParcels.add(sentPlatParcel);
+            if (mostRecentSent == null) {
+              mostRecentSent = sentPlatParcel;
+            }else{
+              showSnackBar(context: context, message: 'Error');
+            }
           }
         }
         log('File is now closed. ${logFile!.lengthSync()}');

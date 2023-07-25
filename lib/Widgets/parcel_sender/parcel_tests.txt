@@ -1,0 +1,6 @@
+Blastoff;2500000
+Blastoff 20
+Tempus;15
+Tempus 20
+Blastsk   15
+Blastsk;20
