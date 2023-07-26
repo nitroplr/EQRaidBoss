@@ -1,5 +1,8 @@
 # EQ Raid Boss
 
+****There is currently a Flutter bug with the file picker that causes a crash with no errors, I will patch when this is fixed********
+https://github.com/miguelpruivo/flutter_file_picker/issues/1328
+
 EQ Raid boss is a loot collector with a sharable block list, a basic raid dump parser, a plat parcels received parser, and a plat parcel sender for EverQuest.
 
 To use EQ Raid Boss, open the installers folder and download the .exe file.  Install the 
