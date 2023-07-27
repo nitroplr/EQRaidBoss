@@ -1,14 +1,16 @@
 class ItemLoot {
   DateTime time;
   String looter;
-  String quantity;
-  String item;
-  String droppedBy;
+  int quantity;
+  String itemGiven;
+  String? itemLooted;
+  String? droppedBy;
+  String id;
 
   ItemLoot(
       {required this.time,
       required this.looter,
       required this.quantity,
-      required this.item,
-      required this.droppedBy});
+      required this.itemLooted,
+      required this.droppedBy,required this.id, required this.itemGiven});
 }

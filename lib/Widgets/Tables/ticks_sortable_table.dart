@@ -7,8 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TicksSortableTable extends ConsumerStatefulWidget {
   final List<MemberTickInfo> memberTickInfo;
   final SharedPreferences prefs;
+  final VoidCallback copy;
 
-  const TicksSortableTable({Key? key, required this.memberTickInfo, required this.prefs}) : super(key: key);
+  const TicksSortableTable({Key? key, required this.memberTickInfo, required this.prefs, required this.copy})
+      : super(key: key);
 
   @override
   TicksSortableTableState createState() => TicksSortableTableState();
@@ -28,16 +30,31 @@ class TicksSortableTableState extends ConsumerState<TicksSortableTable> {
     onSort(sortColumnIndex, isAscending);
     return Scaffold(
       body: SingleChildScrollView(
-        controller: ScrollController(),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: PaginatedDataTable(
-              rowsPerPage: 25,
-              columnSpacing: 10,
-              sortAscending: isAscending,
-              sortColumnIndex: sortColumnIndex,
-              columns: getColumns(columns), source: MyData(memberTickInfo: widget.memberTickInfo),
-            ),
+          controller: ScrollController(),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: PaginatedDataTable(
+                      rowsPerPage: 25,
+                      columnSpacing: 10,
+                      sortAscending: isAscending,
+                      sortColumnIndex: sortColumnIndex,
+                      columns: getColumns(columns),
+                      source: MyData(memberTickInfo: widget.memberTickInfo),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 0,
+                  right: 0,
+                  child: IconButton(
+                icon: const Icon(Icons.copy),
+                onPressed: widget.copy,
+              ))
+            ],
           )),
     );
   }
@@ -88,8 +105,9 @@ class TicksSortableTableState extends ConsumerState<TicksSortableTable> {
   }
 }
 
-class MyData extends DataTableSource{
+class MyData extends DataTableSource {
   List<MemberTickInfo> memberTickInfo;
+
   MyData({required this.memberTickInfo});
 
   @override
@@ -109,5 +127,4 @@ class MyData extends DataTableSource{
 
   @override
   int get selectedRowCount => 0;
-
 }

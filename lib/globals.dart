@@ -18,6 +18,7 @@ void showSnackBar({String message = '', bool printToConsole = false, required Bu
 }
 
 void refreshData({required WidgetRef ref}){
+  ref.read(charLogFileVariableProvider).allItemLootsInRange.clear();
   ref.read(charLogFileVariableProvider).byteOffset = 0;
   ref.read(charLogFileVariableProvider).itemLoots = [];
   ref.read(charLogFileVariableProvider).platParcels = [];

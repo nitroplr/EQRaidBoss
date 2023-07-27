@@ -40,9 +40,9 @@ class _DecaySortableTableState extends ConsumerState<SentParcelsSortableTable> {
       ref.read(sentParcelsSortableTableProvider).needsSort = false;
     }
     int total = 0;
-    sentParcels.forEach((element) {
+    for (var element in sentParcels) {
       total += element.amount;
-    });
+    }
     //'Receiver', 'Amount', 'Time'
     List<String> columns = ['Receiver', '$total', 'Time'];
     return Scaffold(

@@ -1,6 +1,7 @@
-Blastoff;2500000
-Blastoff 20
-Tempus;15
-Tempus 20
-Blastsk   15
-Blastsk;20
+Firstx;5,000
+Firstx;1000
+Secondx;2000
+Secondx;2100
+Thirdx;3000
+Thirdx;3100
+Thirdx;3200

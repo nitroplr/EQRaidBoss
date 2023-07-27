@@ -17,6 +17,7 @@ class PlatParcelsTable extends ConsumerStatefulWidget {
 
 class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
   NumberFormat numberFormat = NumberFormat.decimalPattern();
+
   @override
   Widget build(BuildContext context) {
     List<PlatParcel> parcels = ref.watch(charLogFileVariableProvider).platParcels;
@@ -38,18 +39,26 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
       body: SingleChildScrollView(
           controller: ScrollController(),
           physics: const BouncingScrollPhysics(),
-          child: SizedBox(
-            width: double.maxFinite,
-            child: InkWell(
-              onTap: () {
-                _outputParcelSummary(parcels: parcels);
-              },
-              mouseCursor: SystemMouseCursors.basic,
-              child: DataTable(
-                columns: getColumns(columns),
-                rows: getRows(parcels),
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: DataTable(
+                      columns: getColumns(columns),
+                      rows: getRows(parcels),
+                    ),
+                  ),
+                ],
               ),
-            ),
+              Positioned(
+                  right: 0,
+                  top: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.copy),
+                    onPressed: () => _outputParcelSummary(parcels: parcels),
+                  ))
+            ],
           )),
     );
   }
@@ -90,9 +99,11 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
       output.writeln('${parcel.sender};${numberFormat.format(parcel.amount)}');
     }
     output.writeln('\nSender;Total Sent');
-    memberTotals.forEach((key, value) {output.writeln('$key;${numberFormat.format(value)}');});
+    memberTotals.forEach((key, value) {
+      output.writeln('$key;${numberFormat.format(value)}');
+    });
 
     Clipboard.setData(ClipboardData(text: output.toString()));
-    showSnackBar(context: context, message: 'Parcel summary copied to clipboard.');
+    showSnackBar(context: context, message: 'Parcels received copied to clipboard.');
   }
 }

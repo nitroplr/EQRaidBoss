@@ -63,24 +63,12 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
             }
             memberTickInfo = _getMemberTickInfo(attendance);
             return InkWell(
-              onTap: () {
-                StringBuffer summary = StringBuffer('Player;');
-                for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
-                  summary.write(i + 1);
-                  if (i < memberTickInfo[0].ticks.length - 1) {
-                    summary.write(';');
-                  }
-                }
-                summary.writeln();
-                summary.write(attendance);
-
-                Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
-                showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
-              },
+              onTap: () {},
               mouseCursor: SystemMouseCursors.basic,
               child: TicksSortableTable(
                 prefs: widget.prefs,
                 memberTickInfo: memberTickInfo,
+                copy: ()=>_outputAttendance(memberTickInfo, attendance, context),
               ),
             );
           } else if (snapshot.hasError) {
@@ -89,25 +77,31 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
           }
           return InkWell(
             onTap: () {
-              StringBuffer summary = StringBuffer('Player;');
-              for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
-                summary.write(i + 1);
-                if (i < memberTickInfo[0].ticks.length - 1) {
-                  summary.write(';');
-                }
-              }
-              summary.writeln();
-              summary.write(attendance);
-              Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
-              showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
+              _outputAttendance(memberTickInfo, attendance, context);
             },
             mouseCursor: SystemMouseCursors.basic,
             child: TicksSortableTable(
               prefs: widget.prefs,
               memberTickInfo: memberTickInfo,
+              copy: () => _outputAttendance(memberTickInfo, attendance, context),
             ),
           );
         });
+  }
+
+  void _outputAttendance(List<MemberTickInfo> memberTickInfo, String attendance, BuildContext context) {
+    StringBuffer summary = StringBuffer('Player;');
+    for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
+      summary.write(i + 1);
+      if (i < memberTickInfo[0].ticks.length - 1) {
+        summary.write(';');
+      }
+    }
+    summary.writeln();
+    summary.write(attendance);
+
+    Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
+    showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
   }
 
   void _getLogFiles() {
@@ -121,8 +115,8 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
             (element.statSync().modified.millisecondsSinceEpoch < endTime.millisecondsSinceEpoch &&
                 element.statSync().modified.millisecondsSinceEpoch > widget.start.millisecondsSinceEpoch))
         .toList();
-    files.sort((a, b) =>
-        a.statSync().modified.millisecondsSinceEpoch.compareTo(b.statSync().modified.millisecondsSinceEpoch));
+    files.sort(
+        (a, b) => a.statSync().modified.millisecondsSinceEpoch.compareTo(b.statSync().modified.millisecondsSinceEpoch));
     //get all raid dumps
     for (var fileEntity in files) {
       raidDumps.add(File(fileEntity.path));
@@ -150,6 +144,9 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
       if (line.length > 3) {
         int indexOfFirstSpace = line.indexOf(' ');
         int indexOfSecondSpace = line.indexOf(' ', indexOfFirstSpace + 1);
+        if (indexOfSecondSpace == -1) {
+          indexOfSecondSpace = line.length;
+        }
         String member = line.substring(indexOfFirstSpace, indexOfSecondSpace);
         member.trim();
         members.add(member);

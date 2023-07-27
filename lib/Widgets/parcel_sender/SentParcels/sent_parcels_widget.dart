@@ -3,6 +3,7 @@ import 'package:eq_raid_boss/Model/sent_plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:screen_retriever/screen_retriever.dart';
@@ -27,14 +28,27 @@ class SentParcelsWidget extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(top: 18.0, bottom: 6.0),
             child: ElevatedButton(
-                onPressed: () {
-                  _setCursorPositions(context);
-                },
-                child: const Text('Set cursor positions.')),
+                onPressed: () => _setCursorPositions(context), child: const Text('Set cursor positions.')),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: 10.0),
-            child: const Text('Parcels sent between start and now.'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Parcels sent between start and now.'),
+                IconButton(onPressed: (){
+                  StringBuffer out = StringBuffer();
+                  int total = 0;
+                  for (var sentParcel in sentParcels) {
+                    total+=sentParcel.amount;
+                    out.writeln('${sentParcel.receiver};${numberFormat.format(sentParcel.amount)};${dateFormat.format(sentParcel.time)}');
+                  }
+                  String copyString = 'Receiver;${numberFormat.format(total)};Date\n${out.toString()}';
+                  Clipboard.setData(ClipboardData(text: copyString));
+                  showSnackBar(context: context, message: 'Parcels sent copied to clipboard.');
+                }, icon: const Icon(Icons.copy)),
+              ],
+            ),
           ),
           Expanded(
               child: ListView.builder(
@@ -69,74 +83,74 @@ class SentParcelsWidget extends ConsumerWidget {
     _dialogDelay(parcelDialogDelay, context);
     showAnimatedDialog(
             const AlertDialog(content: Text('Hold mouse cursor over platinum for $parcelDialogDelay seconds.')),
-            context)
+            context, false)
         .then((value) {
       screenRetriever.getCursorScreenPoint().then((value) {
         prefs.setInt(ClickEnums.platinumFirstClickX, value.dx.floor());
         prefs.setInt(ClickEnums.platinumFirstClickY, value.dy.floor());
       });
       _dialogDelay(parcelDialogDelay, context);
+      showAnimatedDialog(
+              const AlertDialog(
+                  content: Text('Hold mouse cursor over platinum accept for $parcelDialogDelay seconds.')),
+              context, false)
+          .then((value) {
+        screenRetriever.getCursorScreenPoint().then((value) {
+          prefs.setInt(ClickEnums.platinumAcceptSecondClickX, value.dx.floor());
+          prefs.setInt(ClickEnums.platinumAcceptSecondClickY, value.dy.floor());
+        });
+        _dialogDelay(parcelDialogDelay, context);
         showAnimatedDialog(
                 const AlertDialog(
-                    content: Text('Hold mouse cursor over platinum accept for $parcelDialogDelay seconds.')),
-                context)
+                    content:
+                        Text('Hold mouse cursor over platinum \'Drop coins here\' for $parcelDialogDelay seconds.')),
+                context, false)
             .then((value) {
           screenRetriever.getCursorScreenPoint().then((value) {
-            prefs.setInt(ClickEnums.platinumAcceptSecondClickX, value.dx.floor());
-            prefs.setInt(ClickEnums.platinumAcceptSecondClickY, value.dy.floor());
+            prefs.setInt(ClickEnums.platinumDropCoinsThirdClickX, value.dx.floor());
+            prefs.setInt(ClickEnums.platinumDropCoinsThirdClickY, value.dy.floor());
           });
           _dialogDelay(parcelDialogDelay, context);
           showAnimatedDialog(
                   const AlertDialog(
-                      content:
-                          Text('Hold mouse cursor over platinum \'Drop coins here\' for $parcelDialogDelay seconds.')),
-                  context)
+                      content: Text('Hold mouse cursor over platinum \'Deposit\' for $parcelDialogDelay seconds.')),
+                  context, false)
               .then((value) {
             screenRetriever.getCursorScreenPoint().then((value) {
-              prefs.setInt(ClickEnums.platinumDropCoinsThirdClickX, value.dx.floor());
-              prefs.setInt(ClickEnums.platinumDropCoinsThirdClickY, value.dy.floor());
+              prefs.setInt(ClickEnums.platinumDepositFourthClickX, value.dx.floor());
+              prefs.setInt(ClickEnums.platinumDepositFourthClickY, value.dy.floor());
             });
             _dialogDelay(parcelDialogDelay, context);
             showAnimatedDialog(
                     const AlertDialog(
-                        content: Text('Hold mouse cursor over platinum \'Deposit\' for $parcelDialogDelay seconds.')),
-                    context)
+                        content: Text(
+                            'Hold mouse cursor over parcel \'To:\' text input field for $parcelDialogDelay seconds.')),
+                    context, false)
                 .then((value) {
               screenRetriever.getCursorScreenPoint().then((value) {
-                prefs.setInt(ClickEnums.platinumDepositFourthClickX, value.dx.floor());
-                prefs.setInt(ClickEnums.platinumDepositFourthClickY, value.dy.floor());
+                prefs.setInt(ClickEnums.receiverInputFifthClickX, value.dx.floor());
+                prefs.setInt(ClickEnums.receiverInputFifthClickY, value.dy.floor());
               });
               _dialogDelay(parcelDialogDelay, context);
               showAnimatedDialog(
                       const AlertDialog(
-                          content: Text(
-                              'Hold mouse cursor over parcel \'To:\' text input field for $parcelDialogDelay seconds.')),
-                      context)
+                          content:
+                              Text('Hold mouse cursor over parcel \'Send\' button for $parcelDialogDelay seconds.')),
+                      context, false)
                   .then((value) {
                 screenRetriever.getCursorScreenPoint().then((value) {
-                  prefs.setInt(ClickEnums.receiverInputFifthClickX, value.dx.floor());
-                  prefs.setInt(ClickEnums.receiverInputFifthClickY, value.dy.floor());
+                  prefs.setInt(ClickEnums.sendSixthClickX, value.dx.floor());
+                  prefs.setInt(ClickEnums.sendSixthClickY, value.dy.floor());
                 });
-                _dialogDelay(parcelDialogDelay, context);
-                showAnimatedDialog(
-                        const AlertDialog(
-                            content:
-                                Text('Hold mouse cursor over parcel \'Send\' button for $parcelDialogDelay seconds.')),
-                        context)
-                    .then((value) {
-                  screenRetriever.getCursorScreenPoint().then((value) {
-                    prefs.setInt(ClickEnums.sendSixthClickX, value.dx.floor());
-                    prefs.setInt(ClickEnums.sendSixthClickY, value.dy.floor());
-                  });
 
-                  windowManager.setAlwaysOnTop(false);
-                  showSnackBar(context: context, message: 'Cursor positions set.');
-                });
+                windowManager.setAlwaysOnTop(false);
+                showSnackBar(context: context, message: 'Cursor positions set.');
               });
             });
           });
         });
       });
+    });
   }
 
   Future<void> _dialogDelay(int dialogDelay, BuildContext context) async {

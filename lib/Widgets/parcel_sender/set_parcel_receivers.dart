@@ -76,7 +76,7 @@ class SetParcelReceivers extends ConsumerWidget {
           if ((amount % twoMil) > 0) {
             sendParcels.add(SendPlatParcel(receiver: split[0].trim(), amount: (amount % twoMil)));
           }
-        } on Exception catch(e){
+        } on Exception {
           showAnimatedDialog(const AlertDialog(content: Text('Input improperly formatted.'),), context);
         }
       }

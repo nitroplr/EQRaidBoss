@@ -40,7 +40,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
   late int sendSixthClickY;
   bool keepGoing = true;
   late final TextEditingController newDelayController;
-  int? delay = 50;
+  int? delay = 150;
 
   @override
   void initState() {
@@ -60,8 +60,8 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
     sendParcels = ref.watch(parcelReceiverProvider).sendParcels;
     delay = widget.prefs.getInt('delay');
     if (delay == null) {
-      widget.prefs.setInt('delay', 50);
-      delay = 50;
+      widget.prefs.setInt('delay', 150);
+      delay = 150;
     }
     NumberFormat numberFormat = NumberFormat.decimalPattern();
     return Column(
@@ -142,9 +142,9 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10.0),
-          child: const Text('Parcels to be sent.'),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 10.0),
+          child: Text('Parcels to be sent.'),
         ),
         Expanded(
             child: ListView.builder(

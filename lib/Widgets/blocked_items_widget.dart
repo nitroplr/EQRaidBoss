@@ -1,6 +1,7 @@
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
+import 'package:eq_raid_boss/Providers/shared_preferences_provider.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,7 +59,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                       onLongPress: () {
                         List<ItemLoot> allItems = ref.read(charLogFileVariableProvider).allItemLootsInRange;
                         for (var itemLoot in allItems) {
-                          if (itemLoot.item == blockedItems[index]) {
+                          if (itemLoot.itemGiven == blockedItems[index]) {
                             ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
                           }
                         }
@@ -77,18 +78,43 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: Align(
-              alignment: Alignment.topRight,
-                child: IconButton(
-              icon: const Icon(Icons.copy),
-              onPressed: () {
-                StringBuffer blockedItemsString = StringBuffer();
-                for (var blockedItem in blockedItems) {
-                  blockedItemsString.writeln(blockedItem);
-                }
-                Clipboard.setData(ClipboardData(text: blockedItemsString.toString()));
-                showSnackBar(context: context, message: 'Blocked items copied to clipboard.');
-              },
-            )),
+                alignment: Alignment.topRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                        onPressed: () {
+                          showAnimatedDialog(
+                              AlertDialog(
+                                title: const Text('Delete Blocked List'),
+                                actions: [
+                                  ElevatedButton(
+                                      onPressed: () {
+                                        ref.read(blockedItemsVariableProvider).blockedItems = [];
+                                        ref.read(sharedPreferencesProvider).setStringList('blockedItems', []);
+                                        popNavigatorContext(context: context);
+                                      },
+                                      child: const Text('Yes')),
+                                  ElevatedButton(
+                                      onPressed: () => popNavigatorContext(context: context), child: const Text('No'))
+                                ],
+                              ),
+                              context);
+                        },
+                        icon: const Icon(Icons.delete_forever)),
+                    IconButton(
+                      icon: const Icon(Icons.copy),
+                      onPressed: () {
+                        StringBuffer blockedItemsString = StringBuffer();
+                        for (var blockedItem in blockedItems) {
+                          blockedItemsString.writeln(blockedItem);
+                        }
+                        Clipboard.setData(ClipboardData(text: blockedItemsString.toString()));
+                        showSnackBar(context: context, message: 'Blocked items copied to clipboard.');
+                      },
+                    ),
+                  ],
+                )),
           ),
         ],
       ),
