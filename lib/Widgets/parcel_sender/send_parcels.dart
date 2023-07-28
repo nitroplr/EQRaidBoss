@@ -41,6 +41,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
   bool keepGoing = true;
   late final TextEditingController newDelayController;
   int? delay = 150;
+  String currentParcelTarget = '';
 
   @override
   void initState() {
@@ -68,7 +69,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 12.0),
-          child:  Wrap(
+          child: Wrap(
             alignment: WrapAlignment.spaceBetween,
             runAlignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -120,6 +121,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
               ),
               ElevatedButton(
                   onPressed: () async {
+                    currentParcelTarget = '';
                     showAnimatedDialog(
                         const AlertDialog(
                           content: Text(
@@ -128,6 +130,12 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
                         context);
                     await Future.delayed(const Duration(seconds: parcelDialogDelay)).then((value) async {
                       popNavigatorContext(context: context);
+                      showAnimatedDialog(
+                          const AlertDialog(
+                            content: Text(
+                                'Parcels are being sent.'),
+                          ),
+                          context, false);
                       await Future.forEach(sendParcels, (SendPlatParcel parcel) async {
                         if (keepGoing) {
                           keepGoing = await _sendParcel(parcel: parcel);
@@ -137,13 +145,14 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
                       });
                       keepGoing = true;
                     });
+                    popNavigatorContext(context: context);
                   },
                   child: const Text('Send Parcels')),
             ],
           ),
         ),
         const Padding(
-          padding: EdgeInsets.only(bottom: 10.0),
+          padding: EdgeInsets.only(bottom: 25.0),
           child: Text('Parcels to be sent.'),
         ),
         Expanded(
@@ -227,34 +236,39 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
     keepGoing = await _checkCursorNotMovedByUser(x: platinumDepositFourthClickX, y: platinumDepositFourthClickY);
     if (!keepGoing) return false;
 
-    SetCursorPos(receiverInputFifthClickX, receiverInputFifthClickY);
-    await _pause();
-    await _leftClick();
-    await _pause();
+    //move cursor to name input
+    if (parcel.receiver.toLowerCase() != currentParcelTarget) {
+      currentParcelTarget = parcel.receiver.toLowerCase();
+      SetCursorPos(receiverInputFifthClickX, receiverInputFifthClickY);
+      await _pause();
+      await _leftClick();
+      await _pause();
 
-    keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
-    if (!keepGoing) return false;
+      keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
+      if (!keepGoing) return false;
 
-    await Typing.deleteText();
-    await _pause();
+      await Typing.deleteText();
+      await _pause();
 
-    keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
-    if (!keepGoing) return false;
+      keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
+      if (!keepGoing) return false;
 
-    await Typing.typeString(text: parcel.receiver.toLowerCase());
-    await _pause();
+      await Typing.typeString(text: parcel.receiver.toLowerCase());
+      await _pause();
 
-    keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
-    if (!keepGoing) return false;
+      keepGoing = await _checkCursorNotMovedByUser(x: receiverInputFifthClickX, y: receiverInputFifthClickY);
+      if (!keepGoing) return false;
+    }
 
+    //click send button
     SetCursorPos(sendSixthClickX, sendSixthClickY);
     await _pause();
     await _leftClick();
     await _pause();
 
+    await Future.delayed(const Duration(milliseconds: 2000));
     keepGoing = await _checkCursorNotMovedByUser(x: sendSixthClickX, y: sendSixthClickY);
     if (!keepGoing) return false;
-    await Future.delayed(const Duration(milliseconds: 2000));
     return true;
   }
 
@@ -273,7 +287,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
     mouse.ref.type = INPUT_MOUSE;
     mouse.ref.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
     SendInput(1, mouse, sizeOf<INPUT>());
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(Duration(milliseconds: _getRandomPauseTime(max: 80, min: 50)));
     mouse.ref.mi.dwFlags = MOUSEEVENTF_LEFTUP;
     SendInput(1, mouse, sizeOf<INPUT>());
   }

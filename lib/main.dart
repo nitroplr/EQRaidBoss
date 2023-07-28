@@ -8,7 +8,6 @@ import 'package:eq_raid_boss/Model/plat_parcel.dart';
 import 'package:eq_raid_boss/Model/sent_plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
-import 'package:eq_raid_boss/Providers/parcel_sender_provider.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Providers/shared_preferences_provider.dart';
 import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
@@ -450,11 +449,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             SentPlatParcel sentPlatParcel =
                 SentPlatParcel(id: const Uuid().v4(), receiver: receiver, amount: amount, time: lineTime);
             sentParcels.add(sentPlatParcel);
-            if (mostRecentSent == null) {
-              mostRecentSent = sentPlatParcel;
-            } else {
-              showSnackBar(context: context, message: 'Error');
-            }
           }
         }
         log('File is now closed. ${logFile!.lengthSync()}');

@@ -26,15 +26,16 @@ class SetParcelReceivers extends ConsumerWidget {
         const Text('Parcel receiver and price input.'),
         Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 12.0),
+              padding: const EdgeInsets.only(left: 12.0, top: 19),
               child: TextField(
-          controller: textEditingController,
-          maxLines: 1000,
-          decoration: const InputDecoration(
-                hintMaxLines: 500,
-                hintText:
+                style: const TextStyle(fontSize: 14),
+                controller: textEditingController,
+                maxLines: 1000,
+                decoration: const InputDecoration(
+                    hintMaxLines: 500,
+                    hintText:
                     'Paste parcels to send here.  Put one parcel on each line with the receiver on the left and ammount on the right.  Example: \nBlastoff 1000\nBlaston 1000 \n        or\nBlastoff;1000\nBlaston;1000'),
-        ),
+              ),
             ))
       ],
     );
@@ -51,7 +52,7 @@ class SetParcelReceivers extends ConsumerWidget {
         line = line.replaceAll(' ', '');
         List<String> split = line.split(';');
         try {
-          if(split.length != 2) throw Exception();
+          if (split.length != 2) throw Exception();
           int amount = int.parse(split[1].trim());
           int numTwoMilSplits = (amount / twoMil).floor();
           for (int i = 0; i < numTwoMilSplits; i++) {
@@ -67,7 +68,7 @@ class SetParcelReceivers extends ConsumerWidget {
         line = line.replaceAll(RegExp(r'\s+'), ' ');
         List<String> split = line.split(' ');
         try {
-          if(split.length != 2) throw Exception();
+          if (split.length != 2) throw Exception();
           int amount = int.parse(split[1].trim());
           int numTwoMilSplits = (amount / twoMil).floor();
           for (int i = 0; i < numTwoMilSplits; i++) {
@@ -81,7 +82,14 @@ class SetParcelReceivers extends ConsumerWidget {
         }
       }
     }
-    sendParcels.sort((a, b) => a.receiver.toLowerCase().compareTo(b.receiver.toLowerCase()));
-    ref.read(parcelReceiverProvider).sendParcels = sendParcels;
+    sendParcels.sort((a, b) {
+      if (a.receiver.toLowerCase().compareTo(b.receiver.toLowerCase()) == 0) {
+        return a.amount.compareTo(b.amount);
+      }
+      return a.receiver.toLowerCase().compareTo(b.receiver.toLowerCase());
+    });
+    ref
+        .read(parcelReceiverProvider)
+        .sendParcels = sendParcels;
   }
 }
