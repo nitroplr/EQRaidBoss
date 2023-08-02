@@ -87,6 +87,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                           showAnimatedDialog(
                               AlertDialog(
                                 title: const Text('Delete Blocked List'),
+                                actionsAlignment: MainAxisAlignment.spaceBetween,
                                 actions: [
                                   ElevatedButton(
                                       onPressed: () {

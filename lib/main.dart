@@ -135,7 +135,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                     start: start,
                     end: end,
                   ),
-                  PlatParcels(prefs: prefs),
+                  PlatParcelsReceived(prefs: prefs),
                   ParcelSender(prefs: prefs),
                 ]),
               ),

@@ -38,13 +38,10 @@ class SentParcelsWidget extends ConsumerWidget {
                 const Text('Parcels sent between start and now.'),
                 IconButton(onPressed: (){
                   StringBuffer out = StringBuffer();
-                  int total = 0;
                   for (var sentParcel in sentParcels) {
-                    total+=sentParcel.amount;
-                    out.writeln('${sentParcel.receiver};${numberFormat.format(sentParcel.amount)};${dateFormat.format(sentParcel.time)}');
+                    out.writeln('${sentParcel.receiver};${numberFormat.format(sentParcel.amount)}');
                   }
-                  String copyString = 'Receiver;${numberFormat.format(total)};Date\n${out.toString()}';
-                  Clipboard.setData(ClipboardData(text: copyString));
+                  Clipboard.setData(ClipboardData(text: out.toString()));
                   showSnackBar(context: context, message: 'Parcels sent copied to clipboard.');
                 }, icon: const Icon(Icons.copy)),
               ],

@@ -48,6 +48,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
                     )
                   ],
                 ),
+                //_outputLootSummary(lootedItems: itemLoots);
                 Positioned(
                   right: 0,
                   top: 0,
@@ -55,9 +56,19 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
                       icon: const Icon(
                         Icons.copy,
                       ),
-                      onPressed: () {
-                        _outputLootSummary(lootedItems: itemLoots);
-                      }),
+                      onPressed: () => showAnimatedDialog(
+                          AlertDialog(
+                              title: const Text('Output Loot'),
+                              actionsAlignment: MainAxisAlignment.spaceBetween,
+                              actions: [
+                                ElevatedButton(
+                                    onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: true),
+                                    child: const Text('All Loot Info')),
+                                ElevatedButton(
+                                    onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: false),
+                                    child: const Text('Items Only'))
+                              ]),
+                          context)),
                 )
               ],
             ),
@@ -232,23 +243,38 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     ref.read(lootsSortableTableVariableProvider).isAscending = ascending;
   }
 
-  void _outputLootSummary({required List<ItemLoot> lootedItems}) {
-    onSort(2, true);
+  void _outputLootSummary({required List<ItemLoot> lootedItems, required bool allInfo}) {
+    List<ItemLoot> sortedLoots = lootedItems;
 
-    StringBuffer output = StringBuffer('Time;Looter;Item;Dropped By\n');
-    for (var item in lootedItems) {
-      for (int i = 0; i < item.quantity; i++) {
-        output.writeln(item.itemLooted == null
-            ? '${DateFormat('EEE, MMM d, h:mm a').format(item.time)};${item.looter};${item.itemGiven} (given not looted);${item.droppedBy}'
-            : '${DateFormat('EEE, MMM d, h:mm a').format(item.time)};${item.looter};${item.itemLooted};${item.droppedBy}');
+    sortedLoots.sort((a, b) {
+      if ((a.itemLooted == null) && (b.itemLooted != null)) {
+        return -1;
+      }
+      if ((b.itemLooted == null) && (a.itemLooted != null)) {
+        return 1;
+      }
+      if (a.itemGiven == b.itemGiven) {
+        return a.time.millisecondsSinceEpoch.compareTo(b.time.millisecondsSinceEpoch);
+      }
+      return a.itemGiven.compareTo(b.itemGiven);
+    });
+
+    StringBuffer output = StringBuffer();
+
+    if (allInfo) {
+      for (var item in lootedItems) {
+        for (int i = 0; i < item.quantity; i++) {
+          output.writeln(item.itemLooted == null
+              ? '${DateFormat('EEE, MMM d, h:mm a').format(item.time)};${item.looter};${item.itemGiven} (given not looted);${item.droppedBy}'
+              : '${DateFormat('EEE, MMM d, h:mm a').format(item.time)};${item.looter};${item.itemLooted};${item.droppedBy}');
+        }
+      }
+    } else {
+      for (var item in lootedItems) {
+        output.writeln(item.itemLooted == null ? '${item.itemGiven} (given not looted)' : '${item.itemLooted}');
       }
     }
-
-    output.writeln('\n');
-    for (var item in lootedItems) {
-      output.writeln(item.itemLooted == null ? '${item.itemGiven} (given not looted)' : '${item.itemLooted}');
-    }
-
+    popNavigatorContext(context: context);
     Clipboard.setData(ClipboardData(text: output.toString()));
     showSnackBar(context: context, message: 'Loot summary copied to clipboard.');
   }

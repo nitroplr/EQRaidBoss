@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class PlatParcelsTable extends ConsumerStatefulWidget {
-  const PlatParcelsTable({
+class PlatParcelsReceivedTable extends ConsumerStatefulWidget {
+  const PlatParcelsReceivedTable({
     Key? key,
   }) : super(key: key);
 
@@ -15,7 +15,7 @@ class PlatParcelsTable extends ConsumerStatefulWidget {
   ConsumerState createState() => _PlatParcelsTableState();
 }
 
-class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
+class _PlatParcelsTableState extends ConsumerState<PlatParcelsReceivedTable> {
   NumberFormat numberFormat = NumberFormat.decimalPattern();
 
   @override
@@ -56,7 +56,20 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
                   top: 0,
                   child: IconButton(
                     icon: const Icon(Icons.copy),
-                    onPressed: () => _outputParcelSummary(parcels: parcels),
+                    onPressed: () => showAnimatedDialog(
+                        AlertDialog(
+                          title: const Text('Output Parcels Received'),
+                          actionsAlignment: MainAxisAlignment.spaceBetween,
+                          actions: [
+                            ElevatedButton(
+                                onPressed: () => _outputParcelSummary(parcels: parcels, allParcels: true),
+                                child: const Text('All Parcels')),
+                            ElevatedButton(
+                                onPressed: () => _outputParcelSummary(parcels: parcels, allParcels: false),
+                                child: const Text('Parcel Totals'))
+                          ],
+                        ),
+                        context),
                   ))
             ],
           )),
@@ -91,18 +104,21 @@ class _PlatParcelsTableState extends ConsumerState<PlatParcelsTable> {
       }).toList();
 
   ///parcels must be sorted
-  void _outputParcelSummary({required List<PlatParcel> parcels}) {
-    StringBuffer output = StringBuffer('Sender;Plat Sent\n');
+  void _outputParcelSummary({required List<PlatParcel> parcels, required bool allParcels}) {
+    StringBuffer output = StringBuffer();
     Map<String, int> memberTotals = {};
     for (var parcel in parcels) {
       memberTotals.update(parcel.sender, (value) => (parcel.amount + value), ifAbsent: () => parcel.amount);
-      output.writeln('${parcel.sender};${numberFormat.format(parcel.amount)}');
+      if (allParcels) {
+        output.writeln('${parcel.sender};${numberFormat.format(parcel.amount)}');
+      }
     }
-    output.writeln('\nSender;Total Sent');
-    memberTotals.forEach((key, value) {
-      output.writeln('$key;${numberFormat.format(value)}');
-    });
-
+    if (!allParcels) {
+      memberTotals.forEach((key, value) {
+        output.writeln('$key;${numberFormat.format(value)}');
+      });
+    }
+    popNavigatorContext(context: context);
     Clipboard.setData(ClipboardData(text: output.toString()));
     showSnackBar(context: context, message: 'Parcels received copied to clipboard.');
   }

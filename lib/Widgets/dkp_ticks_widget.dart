@@ -90,18 +90,12 @@ class _DKPTicksState extends ConsumerState<DKPTicks> {
   }
 
   void _outputAttendance(List<MemberTickInfo> memberTickInfo, String attendance, BuildContext context) {
-    StringBuffer summary = StringBuffer('Player;');
-    for (int i = 0; i < memberTickInfo[0].ticks.length; i++) {
-      summary.write(i + 1);
-      if (i < memberTickInfo[0].ticks.length - 1) {
-        summary.write(';');
-      }
+    StringBuffer summary = StringBuffer();
+    if (attendance.isNotEmpty) {
+      summary.write(attendance);
+      Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
+      showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
     }
-    summary.writeln();
-    summary.write(attendance);
-
-    Clipboard.setData(ClipboardData(text: summary.toString().replaceAll(' ', '')));
-    showSnackBar(context: context, message: 'Attendance summary copied to clipboard.');
   }
 
   void _getLogFiles() {
