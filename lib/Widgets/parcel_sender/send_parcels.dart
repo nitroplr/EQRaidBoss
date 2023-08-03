@@ -26,6 +26,7 @@ class SendParcels extends ConsumerStatefulWidget {
 
 class _SendParcelsState extends ConsumerState<SendParcels> {
   List<SendPlatParcel> sendParcels = [];
+  List<SendPlatParcel> sentParcels = [];
   late int platinumFirstClickX;
   late int platinumFirstClickY;
   late int platinumAcceptSecondClickX;
@@ -144,6 +145,10 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
                         }
                       });
                       keepGoing = true;
+                      for (var sent in sentParcels) {
+                        sendParcels.removeWhere((element) => element == sent);
+                      }
+                      ref.read(parcelReceiverProvider).sendParcels= sendParcels;
                     });
                     popNavigatorContext(context: context);
                   },
@@ -264,6 +269,7 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
     SetCursorPos(sendSixthClickX, sendSixthClickY);
     await _pause();
     await _leftClick();
+    sentParcels.add(parcel);
     await _pause();
 
     await Future.delayed(const Duration(milliseconds: 2000));
