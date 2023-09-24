@@ -123,6 +123,10 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
               ElevatedButton(
                   onPressed: () async {
                     currentParcelTarget = '';
+                    if (sendParcels.isEmpty) {
+                      showAnimatedDialog(const AlertDialog(content: Text('Set parcel receivers before sending.'),), context);
+                      return;
+                    }
                     showAnimatedDialog(
                         const AlertDialog(
                           content: Text(

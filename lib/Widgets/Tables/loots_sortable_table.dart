@@ -1,6 +1,7 @@
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/Providers/loots_sortable_table_variables.dart';
+import 'package:eq_raid_boss/Widgets/help_icon.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,23 +53,29 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
                 Positioned(
                   right: 0,
                   top: 0,
-                  child: IconButton(
-                      icon: const Icon(
-                        Icons.copy,
-                      ),
-                      onPressed: () => showAnimatedDialog(
-                          AlertDialog(
-                              title: const Text('Output Loot'),
-                              actionsAlignment: MainAxisAlignment.spaceBetween,
-                              actions: [
-                                ElevatedButton(
-                                    onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: true),
-                                    child: const Text('All Loot Info')),
-                                ElevatedButton(
-                                    onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: false),
-                                    child: const Text('Items Only'))
-                              ]),
-                          context)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                          icon: const Icon(
+                            Icons.copy,
+                          ),
+                          onPressed: () => showAnimatedDialog(
+                              AlertDialog(
+                                  title: const Text('Output Loot'),
+                                  actionsAlignment: MainAxisAlignment.spaceBetween,
+                                  actions: [
+                                    ElevatedButton(
+                                        onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: true),
+                                        child: const Text('All Loot Info')),
+                                    ElevatedButton(
+                                        onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: false),
+                                        child: const Text('Items Only'))
+                                  ]),
+                              context)),
+                      const HelpIcon(helpText: 'Sort columns by clicking on the column header.  Quick block single items with a long press on the item.  Press the copy button to output to clipboard for easy spreadsheet or Raid Builder pasting.', title: 'Loots Info',)
+                    ],
+                  ),
                 )
               ],
             ),
@@ -96,7 +103,7 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
               ),
               onLongPress: () {
                 List<String> blockedItems = ref.read(blockedItemsVariableProvider).blockedItems;
-                blockedItems.add(itemLoot.itemGiven);
+                blockedItems.add(itemLoot.itemGiven.toLowerCase());
                 blockedItems.sort();
                 ref
                     .read(charLogFileVariableProvider)

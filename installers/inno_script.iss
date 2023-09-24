@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "EQ Raid Boss"
-#define MyAppVersion "1.1.5"
+#define MyAppVersion "1.1.8"
 #define MyAppPublisher "Raid Builder"
 #define MyAppURL "https://raidbuilder.app"
 #define MyAppExeName "eq_raid_boss.exe"

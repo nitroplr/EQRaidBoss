@@ -2,6 +2,7 @@ import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
 import 'package:eq_raid_boss/Providers/shared_preferences_provider.dart';
+import 'package:eq_raid_boss/Widgets/help_icon.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,6 +94,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                                       onPressed: () {
                                         ref.read(blockedItemsVariableProvider).blockedItems = [];
                                         ref.read(sharedPreferencesProvider).setStringList('blockedItems', []);
+                                        refreshData(ref: ref);
                                         popNavigatorContext(context: context);
                                       },
                                       child: const Text('Yes')),
@@ -114,6 +116,7 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                         showSnackBar(context: context, message: 'Blocked items copied to clipboard.');
                       },
                     ),
+                    const HelpIcon(helpText: 'Click and hold on an item to unblock it.  Press the copy button to share your block list with someone else.  Add multiple items to the block list at once by entering one item per line after hitting the plus icon in the lower right.  Clear the block list with the trash can.', title: 'Blocked Loots Info',)
                   ],
                 )),
           ),
@@ -142,14 +145,20 @@ class _BlockedItemsState extends ConsumerState<BlockedItems> {
                           onPressed: () {
                             Set<String> blocked = widget.prefs.getStringList('blockedItems')!.toSet();
                             Set<String> newBlocked = blockListInputController!.text.split('\n').toSet();
-                            blocked.addAll(newBlocked);
+                            Set<String> newBlockedFormatted = {};
+                            for (var element in newBlocked) {
+                              newBlockedFormatted.add(element.trim().toLowerCase());
+                            }
+                            blocked.addAll(newBlockedFormatted);
+                            ref
+                                .read(charLogFileVariableProvider)
+                                .itemLoots
+                                .removeWhere((element) => newBlockedFormatted.contains(element.itemGiven));
                             List<String> sortedBlocked = blocked.toList();
                             sortedBlocked.sort();
-                            for (int i = 0; i < sortedBlocked.length; i++) {
-                              sortedBlocked[i] = sortedBlocked[i].toLowerCase().trim();
-                            }
                             blockedVariables.blockedItems = sortedBlocked;
-                            widget.prefs.setStringList('blockedItems', blocked.toList());
+                            widget.prefs.setStringList('blockedItems', sortedBlocked);
+                            refreshData(ref: ref);
                             Navigator.pop(context);
                           },
                           child: const Text('Block')),
