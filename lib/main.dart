@@ -73,12 +73,16 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   void initState() {
     prefs = ref.read(sharedPreferencesProvider);
-    String charLogFile = prefs.getString('characterLogFile')!;
-    int underscoreIndex = charLogFile.indexOf('_');
-    thisPlayerName = charLogFile.substring(underscoreIndex + 1, charLogFile.indexOf('_', underscoreIndex + 1));
+    String charLogFile = prefs.getString('characterLogFile') ?? "";
     start = DateTime.fromMillisecondsSinceEpoch(DateTime.now().millisecondsSinceEpoch - 28800000);
     end = DateTime.now();
     startTime = DateFormat('EEE, MMM d y, h:mm a').format(start);
+    if(charLogFile != ""){
+      int underscoreIndex = charLogFile.indexOf('_');
+      thisPlayerName = charLogFile.substring(underscoreIndex + 1, charLogFile.indexOf('_', underscoreIndex + 1));
+    }else{
+      prefs.setString('characterLogFile', "");
+    }
     timer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
       String charFilePath = prefs.getString('characterLogFile')!;
       logFile = File(charFilePath);
