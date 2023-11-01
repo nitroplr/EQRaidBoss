@@ -14,7 +14,7 @@ import '../../Providers/blocked_items_variables.dart';
 class LootsSortableTable extends ConsumerStatefulWidget {
   final SharedPreferences prefs;
 
-  const LootsSortableTable({Key? key, required this.prefs}) : super(key: key);
+  const LootsSortableTable({super.key, required this.prefs});
 
   @override
   LootsSortableTableState createState() => LootsSortableTableState();

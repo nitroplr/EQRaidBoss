@@ -13,9 +13,9 @@ class BlockedItems extends ConsumerStatefulWidget {
   final SharedPreferences prefs;
 
   const BlockedItems({
-    Key? key,
+    super.key,
     required this.prefs,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState createState() => _BlockedItemsState();

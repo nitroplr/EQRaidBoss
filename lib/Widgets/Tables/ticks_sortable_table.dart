@@ -9,8 +9,7 @@ class TicksSortableTable extends ConsumerStatefulWidget {
   final SharedPreferences prefs;
   final VoidCallback copy;
 
-  const TicksSortableTable({Key? key, required this.memberTickInfo, required this.prefs, required this.copy})
-      : super(key: key);
+  const TicksSortableTable({super.key, required this.memberTickInfo, required this.prefs, required this.copy});
 
   @override
   TicksSortableTableState createState() => TicksSortableTableState();

@@ -15,7 +15,7 @@ class DKPTicks extends ConsumerStatefulWidget {
   final DateTime start;
   final DateTime end;
 
-  const DKPTicks({Key? key, required this.prefs, required this.start, required this.end}) : super(key: key);
+  const DKPTicks({super.key, required this.prefs, required this.start, required this.end});
 
   @override
   ConsumerState createState() => _DKPTicksState();

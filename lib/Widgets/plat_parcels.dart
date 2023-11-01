@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PlatParcelsReceived extends ConsumerStatefulWidget {
   final SharedPreferences prefs;
   const PlatParcelsReceived({
-    Key? key, required this.prefs
-  }) : super(key: key);
+    super.key, required this.prefs
+  });
 
   @override
   ConsumerState createState() => _PlatParcelsState();

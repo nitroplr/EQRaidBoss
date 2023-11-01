@@ -12,11 +12,11 @@ class ItemLoots extends ConsumerStatefulWidget {
   final DateTime end;
 
   const ItemLoots({
-    Key? key,
+    super.key,
     required this.prefs,
     required this.start,
     required this.end,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState createState() => _ItemLootsState();
