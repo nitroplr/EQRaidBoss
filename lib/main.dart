@@ -287,7 +287,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     int fileLength = await logFile!.length();
     if (fileLength != ref.read(charLogFileVariableProvider).byteOffset) {
       int byteOffset = ref.read(charLogFileVariableProvider).byteOffset;
-
       if (byteOffset != 0) {
         await _getNewLoots(fileLength);
       } else {
@@ -299,8 +298,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   Future<void> _getLootsParcelsFromEoFtoStartTime(int fileLength) async {
     if (ref.read(charLogFileVariableProvider).isProcessing == false) {
       ref.read(charLogFileVariableProvider).isProcessing = true;
-      //reading 1mb at a time
-      int startOffset = fileLength - 1000000;
+      //reading 10mb at a time
+      int startOffset = fileLength - 10000000;
       if (startOffset < 0) {
         startOffset = 0;
       }
@@ -308,6 +307,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       List<PlatParcel> parcels = [];
       List<SentPlatParcel> sentParcels = [];
       await Future.doWhile(() async {
+        int openTime = DateTime.now().millisecondsSinceEpoch;
         Stream<String> lines = logFile!
             .openRead(startOffset, endOffset)
             .transform(utf8.decoder) // Decode bytes to UTF-8.
@@ -315,8 +315,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         bool firstLine = true;
         int firstLineOffset = 0;
         try {
+          List<String> newItemLines = [];
+          List<ItemLoot> newGivenLoots = [];
           await for (var line in lines) {
-            List<String> newItemLines = [];
             //increment next end offset by first line length to account for partial lines
             //adding an extra 15 to be safe, but should be guaranteed to not pickup enough of the next line
             // to get parsed
@@ -332,21 +333,21 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               }
               //check if item has been given
               if ((line.contains(RegExp(r'.* won the .* roll on .* with a roll of \d*.')) ||
-                      line.contains(RegExp(r'.* was given to .*.')) ||
+                      line.contains(' was given to ') ||
                       line.contains(RegExp(r'] \d+ .* were given to'))) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
-                _handleLootGiven(line, lineTime);
+                newGivenLoots.addAll(_handleLootGiven(line, lineTime));
               }
               //itemloot lines
-              if ((line.contains(RegExp(r'--You have looted .*--')) ||
+              if ((line.contains("--You have looted ") ||
                       line.contains(RegExp(r'--.* has looted .*--'))) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newItemLines.add(line);
               }
               //parcel lines
-              if (line.contains(RegExp(r'^\[.*\].* hands you the Money \(\d+p\) that was sent from .*$')) &&
+              if (line.contains(' hands you the Money ') && (line.contains(' that was sent from ')) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -356,8 +357,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 amount = int.parse(line.substring(matches[matches.length - 1].start, matches[matches.length - 1].end));
                 parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
               }
-              if (line.contains(
-                      RegExp(r"^\[.*\].* told you, 'I will deliver the Money \(\d+p\) to .* as soon as possible!'$")) &&
+              //parcels sent
+              if (line.contains(' told you, \'I will deliver the Money ') && line.contains(" as soon as possible!\'") &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -369,9 +370,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                     .add(SentPlatParcel(receiver: receiver, amount: amount, time: lineTime, id: const Uuid().v4()));
               }
             }
-            _buildItemLoots(itemLines: newItemLines);
           }
-          log('File is now closed. $startOffset - $endOffset');
+          _buildItemLoots(itemLines: newItemLines);
+          ref.read(charLogFileVariableProvider).itemLoots.addAll(newGivenLoots);
+          log('File is now closed. $startOffset - $endOffset\nTime open: ${(DateTime.now().millisecondsSinceEpoch - openTime) / 1000} secs');
         } catch (e, stackTrace) {
           log('Error: $e \n $stackTrace');
         }
@@ -466,7 +468,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     }
   }
 
-  void _handleLootGiven(String line, DateTime lineTime) {
+  List<ItemLoot> _handleLootGiven(String line, DateTime lineTime) {
     String itemGiven = '';
     String looter = '';
     String quantity = '0';
@@ -503,6 +505,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       }
     }
     int q = int.parse(quantity);
+    List<ItemLoot> itemsGiven = [];
     for (int i = 0; i < q; i++) {
       ItemLoot itemLoot = ItemLoot(
           time: lineTime,
@@ -514,9 +517,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           itemGiven: itemGiven);
       ref.read(charLogFileVariableProvider).allItemLootsInRange.add(itemLoot);
       if (!ref.read(blockedItemsVariableProvider).blockedItems.contains(itemGiven)) {
-        ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
+        itemsGiven.add(itemLoot);
       }
     }
+    return itemsGiven;
   }
 
   DateTime _getLineTime({required String line}) {
@@ -545,6 +549,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
 
   void _buildItemLoots({required List<String> itemLines}) {
     List<ItemLoot> allItemLootsInRangeProvider = ref.read(charLogFileVariableProvider).allItemLootsInRange;
+    List<ItemLoot> itemLootsToAdd = [];
     for (var line in itemLines) {
       //time
       DateTime time = _getLineTime(line: line);
@@ -597,12 +602,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             (time.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
           ref.read(charLogFileVariableProvider).allItemLootsInRange.add(itemLoot);
           if (!ref.read(blockedItemsVariableProvider).blockedItems.contains(itemLoot.itemLooted)) {
-            ref.read(charLogFileVariableProvider).itemLoots.add(itemLoot);
+            itemLootsToAdd.add(itemLoot);
           }
         }
       }
-      //trigger ui update
-      ref.read(charLogFileVariableProvider).itemLoots = ref.read(charLogFileVariableProvider).itemLoots;
     }
+    //trigger ui update
+    ref.read(charLogFileVariableProvider).itemLoots.addAll(itemLootsToAdd);
   }
 }

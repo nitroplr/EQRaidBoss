@@ -22,7 +22,7 @@ class LootsSortableTable extends ConsumerStatefulWidget {
 
 class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
   List<ItemLoot> itemLoots = [];
-
+  int buildCount = 0;
   @override
   Widget build(BuildContext context) {
     itemLoots = ref.watch(charLogFileVariableProvider).itemLoots;
@@ -33,52 +33,51 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     return Scaffold(
       body: SingleChildScrollView(
           controller: ScrollController(),
-          child: SizedBox(
-            width: double.maxFinite,
-            child: Stack(
-              children: [
-                Row(
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: PaginatedDataTable(
+                      sortAscending: isAscending,
+                      sortColumnIndex: sortColumnIndex,
+                      columns: getColumns(columns),
+                      source: MyData(itemLoots: itemLoots, ref: ref, prefs: widget.prefs),
+                      rowsPerPage: 100,
+                      showFirstLastButtons: true,
+                    ),
+                  )
+                ],
+              ),
+              //_outputLootSummary(lootedItems: itemLoots);
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: DataTable(
-                        sortAscending: isAscending,
-                        sortColumnIndex: sortColumnIndex,
-                        columns: getColumns(columns),
-                        rows: getRows(itemLoots),
-                      ),
-                    )
+                    IconButton(
+                        icon: const Icon(
+                          Icons.copy,
+                        ),
+                        onPressed: () => showAnimatedDialog(
+                            AlertDialog(
+                                title: const Text('Output Loot'),
+                                actionsAlignment: MainAxisAlignment.spaceBetween,
+                                actions: [
+                                  ElevatedButton(
+                                      onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: true),
+                                      child: const Text('All Loot Info')),
+                                  ElevatedButton(
+                                      onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: false),
+                                      child: const Text('Items Only'))
+                                ]),
+                            context)),
+                    const HelpIcon(helpText: 'Sort columns by clicking on the column header.  Quick block single items with a long press on the item.  Press the copy button to output to clipboard for easy spreadsheet or Raid Builder pasting.', title: 'Loots Info',)
                   ],
                 ),
-                //_outputLootSummary(lootedItems: itemLoots);
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                          icon: const Icon(
-                            Icons.copy,
-                          ),
-                          onPressed: () => showAnimatedDialog(
-                              AlertDialog(
-                                  title: const Text('Output Loot'),
-                                  actionsAlignment: MainAxisAlignment.spaceBetween,
-                                  actions: [
-                                    ElevatedButton(
-                                        onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: true),
-                                        child: const Text('All Loot Info')),
-                                    ElevatedButton(
-                                        onPressed: () => _outputLootSummary(lootedItems: itemLoots, allInfo: false),
-                                        child: const Text('Items Only'))
-                                  ]),
-                              context)),
-                      const HelpIcon(helpText: 'Sort columns by clicking on the column header.  Quick block single items with a long press on the item.  Press the copy button to output to clipboard for easy spreadsheet or Raid Builder pasting.', title: 'Loots Info',)
-                    ],
-                  ),
-                )
-              ],
-            ),
+              )
+            ],
           )),
     );
   }
@@ -89,43 +88,6 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
             onSort: onSort,
           ))
       .toList();
-
-  //['Time', 'Looter', 'Item', 'Dropped By']
-  List<DataRow> getRows(List<ItemLoot> itemLoots) => itemLoots.map((ItemLoot itemLoot) {
-        return DataRow(key: ValueKey(itemLoot.id), cells: [
-          DataCell(Text(DateFormat('EEE, MMM d, h:mm:ss a').format(itemLoot.time))),
-          DataCell(Text(itemLoot.looter)),
-          DataCell(
-            InkWell(
-              child: Text(
-                itemLoot.itemLooted == null ? '${itemLoot.itemGiven} (given not looted)' : itemLoot.itemLooted!,
-                style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
-              ),
-              onLongPress: () {
-                List<String> blockedItems = ref.read(blockedItemsVariableProvider).blockedItems;
-                blockedItems.add(itemLoot.itemGiven.toLowerCase());
-                blockedItems.sort();
-                ref
-                    .read(charLogFileVariableProvider)
-                    .itemLoots
-                    .removeWhere((element) => element.itemGiven == itemLoot.itemGiven);
-                ref.read(blockedItemsVariableProvider).blockedItems = blockedItems;
-                widget.prefs.setStringList('blockedItems', blockedItems);
-              },
-            ),
-          ),
-          DataCell(Text(itemLoot.droppedBy != null ? itemLoot.droppedBy! : ''))
-        ]);
-      }).toList();
-
-  List<DataCell> getCells(List<dynamic> cells) => cells.map((data) {
-        var potentialDate = int.tryParse(data.toString());
-        if (potentialDate != null) {
-          return DataCell(
-              Text(DateFormat('EEE, MMM d, h:mm a').format(DateTime.fromMillisecondsSinceEpoch(potentialDate))));
-        }
-        return DataCell(Text('$data'));
-      }).toList();
 
   //['Time', 'Looter', 'Item', 'Dropped By']
   void onSort(int columnIndex, bool ascending) {
@@ -285,4 +247,50 @@ class LootsSortableTableState extends ConsumerState<LootsSortableTable> {
     Clipboard.setData(ClipboardData(text: output.toString()));
     showSnackBar(context: context, message: 'Loot summary copied to clipboard.');
   }
+}
+
+class MyData extends DataTableSource {
+  final List<ItemLoot> itemLoots;
+  final WidgetRef ref;
+  final SharedPreferences prefs;
+  int hereCount = 0;
+
+  MyData({required this.itemLoots, required this.ref, required this.prefs});
+
+  @override
+  DataRow? getRow(int index) {
+    ItemLoot itemLoot = itemLoots[index];
+    List<DataCell> cells = [DataCell(Text(DateFormat('EEE, MMM d, h:mm:ss a').format(itemLoot.time))),
+      DataCell(Text(itemLoot.looter)),
+      DataCell(
+        InkWell(
+          child: Text(
+            itemLoot.itemLooted == null ? '${itemLoot.itemGiven} (given not looted)' : itemLoot.itemLooted!,
+            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+          ),
+          onLongPress: () {
+            List<String> blockedItems = ref.read(blockedItemsVariableProvider).blockedItems;
+            blockedItems.add(itemLoot.itemGiven.toLowerCase());
+            blockedItems.sort();
+            ref
+                .read(charLogFileVariableProvider)
+                .itemLoots
+                .removeWhere((element) => element.itemGiven == itemLoot.itemGiven);
+            ref.read(blockedItemsVariableProvider).blockedItems = blockedItems;
+            prefs.setStringList('blockedItems', blockedItems);
+          },
+        ),
+      ),
+      DataCell(Text(itemLoot.droppedBy != null ? itemLoot.droppedBy! : ''))];
+    return DataRow(cells: cells, key: ValueKey(itemLoot.id));
+  }
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get rowCount => itemLoots.length;
+
+  @override
+  int get selectedRowCount => 0;
 }
