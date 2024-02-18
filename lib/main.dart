@@ -325,23 +325,22 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               firstLineOffset = line.length + 15;
               firstLine = false;
             }
-            if (line.contains(RegExp(r'^\[.*\].*$')) && !firstLine) {
+            if (/*(line.contains('[') && line.contains(']'))&&*/ line.contains(RegExp(r'^\[.*\].*$')) && !firstLine) {
               DateTime lineTime = _getLineTime(line: line);
               //end while loop if time is before start time
               if (lineTime.millisecondsSinceEpoch < start.millisecondsSinceEpoch) {
                 startOffset = -1;
               }
               //check if item has been given
-              if ((line.contains(RegExp(r'.* won the .* roll on .* with a roll of \d*.')) ||
+              if (((line.contains(' roll on ') && line.contains(' won the ') && line.contains(' with a roll of ')) ||
                       line.contains(' was given to ') ||
-                      line.contains(RegExp(r'] \d+ .* were given to'))) &&
+                      line.contains(' were given to ')) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newGivenLoots.addAll(_handleLootGiven(line, lineTime));
               }
               //itemloot lines
-              if ((line.contains("--You have looted ") ||
-                      line.contains(RegExp(r'--.* has looted .*--'))) &&
+              if ((line.contains("--You have looted ") || (line.contains('--') && line.contains(' has looted '))) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newItemLines.add(line);
