@@ -15,6 +15,7 @@ import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
 import 'package:eq_raid_boss/Widgets/item_loots_widget.dart';
 import 'package:eq_raid_boss/Widgets/parcel_sender/parcel_sender.dart';
 import 'package:eq_raid_boss/Widgets/plat_parcels.dart';
+import 'package:eq_raid_boss/bmh_string_search.dart';
 import 'package:eq_raid_boss/globals.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -306,8 +307,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       int endOffset = fileLength + 1;
       List<PlatParcel> parcels = [];
       List<SentPlatParcel> sentParcels = [];
+      int totalStartTime = DateTime.now().millisecondsSinceEpoch;
+      List<String> newItemLines = [];
+      List<ItemLoot> newGivenLoots = [];
       await Future.doWhile(() async {
-        int openTime = DateTime.now().millisecondsSinceEpoch;
         Stream<String> lines = logFile!
             .openRead(startOffset, endOffset)
             .transform(utf8.decoder) // Decode bytes to UTF-8.
@@ -315,8 +318,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         bool firstLine = true;
         int firstLineOffset = 0;
         try {
-          List<String> newItemLines = [];
-          List<ItemLoot> newGivenLoots = [];
+          int algo = 1;
           await for (var line in lines) {
             //increment next end offset by first line length to account for partial lines
             //adding an extra 15 to be safe, but should be guaranteed to not pickup enough of the next line
@@ -325,28 +327,28 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               firstLineOffset = line.length + 15;
               firstLine = false;
             }
-            if (/*(line.contains('[') && line.contains(']'))&&*/ line.contains(RegExp(r'^\[.*\].*$')) && !firstLine) {
+            if ((bmhContains(pattern: '[', text: line, algo: algo) && bmhContains(pattern: ']', text: line, algo: algo)) && !firstLine) {
               DateTime lineTime = _getLineTime(line: line);
               //end while loop if time is before start time
               if (lineTime.millisecondsSinceEpoch < start.millisecondsSinceEpoch) {
                 startOffset = -1;
               }
               //check if item has been given
-              if (((line.contains(' roll on ') && line.contains(' won the ') && line.contains(' with a roll of ')) ||
-                      line.contains(' was given to ') ||
-                      line.contains(' were given to ')) &&
+              if (((bmhContains(pattern: ' roll on ', text: line, algo: algo) && bmhContains(pattern: ' won the ', text: line, algo: algo) && bmhContains(pattern: ' with a roll of ', text: line, algo: algo)) ||
+                      bmhContains(pattern: ' was given to ', text: line, algo: algo) ||
+                      bmhContains(pattern: ' were given to ', text: line, algo: algo)) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newGivenLoots.addAll(_handleLootGiven(line, lineTime));
               }
               //itemloot lines
-              if ((line.contains("--You have looted ") || (line.contains('--') && line.contains(' has looted '))) &&
+              if ((bmhContains(pattern: '--You have looted ', text: line, algo: algo) || (bmhContains(pattern: '--', text: line, algo: algo) && bmhContains(pattern: ' has looted ', text: line, algo: algo))) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newItemLines.add(line);
               }
               //parcel lines
-              if (line.contains(' hands you the Money ') && (line.contains(' that was sent from ')) &&
+              if (bmhContains(pattern: ' hands you the Money ', text: line, algo: algo)  && bmhContains(pattern: ' that was sent from ', text: line, algo: algo) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -357,7 +359,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
               }
               //parcels sent
-              if (line.contains(' told you, \'I will deliver the Money ') && line.contains(" as soon as possible!\'") &&
+              if (bmhContains(pattern: ' told you, \'I will deliver the Money ', text: line, algo: algo) && bmhContains(pattern: " as soon as possible!\'", text: line, algo: algo) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -370,9 +372,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               }
             }
           }
-          _buildItemLoots(itemLines: newItemLines);
-          ref.read(charLogFileVariableProvider).itemLoots.addAll(newGivenLoots);
-          log('File is now closed. $startOffset - $endOffset\nTime open: ${(DateTime.now().millisecondsSinceEpoch - openTime) / 1000} secs');
         } catch (e, stackTrace) {
           log('Error: $e \n $stackTrace');
         }
@@ -392,6 +391,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           return false;
         }
       });
+      ref.read(charLogFileVariableProvider).itemLoots.addAll(newGivenLoots);
+      _buildItemLoots(itemLines: newItemLines);
+      print('Total time: ${(DateTime.now().millisecondsSinceEpoch - totalStartTime) / 1000} secs');
       ref
           .read(charLogFileVariableProvider)
           .updateOffsetAndParcels(offset: fileLength, parcels: parcels, sentParcels: sentParcels);
