@@ -294,11 +294,11 @@ class _SendParcelsState extends ConsumerState<SendParcels> {
 
   Future<void> _leftClick() async {
     final mouse = calloc<INPUT>();
-    mouse.ref.type = INPUT_MOUSE;
-    mouse.ref.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    mouse.ref.type = INPUT_TYPE.INPUT_MOUSE;
+    mouse.ref.mi.dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTDOWN;
     SendInput(1, mouse, sizeOf<INPUT>());
     await Future.delayed(Duration(milliseconds: _getRandomPauseTime(max: 80, min: 50)));
-    mouse.ref.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    mouse.ref.mi.dwFlags = MOUSE_EVENT_FLAGS.MOUSEEVENTF_LEFTUP;
     SendInput(1, mouse, sizeOf<INPUT>());
   }
 

@@ -22,12 +22,13 @@ void refreshData({required WidgetRef ref}){
   ref.read(charLogFileVariableProvider).byteOffset = 0;
   ref.read(charLogFileVariableProvider).itemLoots = [];
   ref.read(charLogFileVariableProvider).platParcels = [];
+  ref.read(charLogFileVariableProvider).chatChannelLoots = [];
   ref.read(refreshTicksVariableProvider).refresh = true;
 }
 
 Future<void> showAnimatedDialog(Widget dialog, BuildContext context, [bool? barrierDismissable]) {
   return showGeneralDialog(
-    barrierColor: Colors.blueGrey.withOpacity(0.25),
+    barrierColor: Colors.blueGrey.withAlpha(64),
     barrierDismissible: barrierDismissable ?? true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     context: context,

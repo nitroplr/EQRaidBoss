@@ -74,7 +74,7 @@ int searchW3BM(String text, String pattern) {
   int n = text.length;
   List<int> patternUnits = pattern.codeUnits;
   List<int> textUnits = text.codeUnits;
-  List<int> badchar = List.generate(NO_OF_CHARS, (index) => -1);;
+  List<int> badchar = List.generate(NO_OF_CHARS, (index) => -1);
 
   badCharHeuristic(patternUnits, m, badchar);
 

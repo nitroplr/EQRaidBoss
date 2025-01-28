@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ItemLoots extends ConsumerStatefulWidget {
+class ItemLootsWidget extends ConsumerStatefulWidget {
   final SharedPreferences prefs;
   final DateTime start;
   final DateTime end;
 
-  const ItemLoots({
+  const ItemLootsWidget({
     super.key,
     required this.prefs,
     required this.start,
@@ -22,7 +22,7 @@ class ItemLoots extends ConsumerStatefulWidget {
   ConsumerState createState() => _ItemLootsState();
 }
 
-class _ItemLootsState extends ConsumerState<ItemLoots> {
+class _ItemLootsState extends ConsumerState<ItemLootsWidget> {
   File? logFile;
   DateTime? endTime;
 
@@ -42,7 +42,7 @@ class _ItemLootsState extends ConsumerState<ItemLoots> {
     endTime = ref.read(refreshTicksVariableProvider).endIsNow ? DateTime.now() : widget.end;
     String charFilePath = widget.prefs.getString('characterLogFile')!;
     logFile = File(charFilePath);
-    final lootsAsyncValue = ref.watch(charLogFileVariableProvider);
+    ref.watch(charLogFileVariableProvider);
     return charFilePath == ''
         ? const SizedBox()
         : LootsSortableTable(

@@ -246,30 +246,30 @@ class Typing {
 
   static Future<void> _typeCharacter(int character) async {
     final kbd = calloc<INPUT>();
-    kbd.ref.type = INPUT_KEYBOARD;
+    kbd.ref.type = INPUT_TYPE.INPUT_KEYBOARD;
     kbd.ref.ki.time = 0;
     kbd.ref.ki.wVk = 0;
     kbd.ref.ki.dwExtraInfo = 0;
-    kbd.ref.ki.dwFlags = KEYEVENTF_SCANCODE;
+    kbd.ref.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_SCANCODE;
     kbd.ref.ki.wScan = character;
     SendInput(1, kbd, sizeOf<INPUT>());
     await Future.delayed(const Duration(milliseconds: 20));
-    kbd.ref.ki.dwFlags = KEYEVENTF_KEYUP;
+    kbd.ref.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
     SendInput(1, kbd, sizeOf<INPUT>());
   }
 
   static Future<void> deleteText()async{
     for (int i = 0; i < 35; i++) {
       final kbd = calloc<INPUT>();
-      kbd.ref.type = INPUT_KEYBOARD;
+      kbd.ref.type = INPUT_TYPE.INPUT_KEYBOARD;
       kbd.ref.ki.time = 0;
       kbd.ref.ki.wVk = 0;
       kbd.ref.ki.dwExtraInfo = 0;
-      kbd.ref.ki.dwFlags = KEYEVENTF_SCANCODE;
+      kbd.ref.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_SCANCODE;
       kbd.ref.ki.wScan = backspace;
       SendInput(1, kbd, sizeOf<INPUT>());
       await Future.delayed(const Duration(milliseconds: 5));
-      kbd.ref.ki.dwFlags = KEYEVENTF_KEYUP;
+      kbd.ref.ki.dwFlags = KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
       SendInput(1, kbd, sizeOf<INPUT>());
       await Future.delayed(const Duration(milliseconds: 5));
     }

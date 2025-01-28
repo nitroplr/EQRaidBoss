@@ -1,4 +1,5 @@
 
+import 'package:eq_raid_boss/Model/chat_channel_loot.dart';
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Model/plat_parcel.dart';
 import 'package:eq_raid_boss/Model/sent_plat_parcel.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CharLogFileVariableNotifier extends ChangeNotifier {
   List<ItemLoot> _itemLoots = [];
+  List<ChatChannelLoot> _chatChannelLoots = [];
   List<ItemLoot> _allItemLootsInRange = [];
   List<PlatParcel> _platParcels = [];
   List<SentPlatParcel> _sentPlatParcels = [];
@@ -15,6 +17,7 @@ class CharLogFileVariableNotifier extends ChangeNotifier {
   bool _isProcessing = false;
 
   List<ItemLoot> get itemLoots => _itemLoots;
+  List<ChatChannelLoot> get chatChannelLoots => _chatChannelLoots;
   List<ItemLoot> get allItemLootsInRange => _allItemLootsInRange;
   List<PlatParcel> get platParcels => _platParcels;
   List<SentPlatParcel> get sentPlatParcels => _sentPlatParcels;
@@ -24,6 +27,11 @@ class CharLogFileVariableNotifier extends ChangeNotifier {
 
   set itemLoots(List<ItemLoot> loots) {
     _itemLoots = loots;
+    notifyListeners();
+  }
+
+  set chatChannelLoots(List<ChatChannelLoot> chatChannelLoots){
+    _chatChannelLoots = chatChannelLoots;
     notifyListeners();
   }
 

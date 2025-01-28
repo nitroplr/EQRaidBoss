@@ -3,14 +3,17 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:eq_raid_boss/Model/chat_channel_loot.dart';
 import 'package:eq_raid_boss/Model/item_loot.dart';
 import 'package:eq_raid_boss/Model/plat_parcel.dart';
 import 'package:eq_raid_boss/Model/sent_plat_parcel.dart';
 import 'package:eq_raid_boss/Providers/blocked_items_variables.dart';
 import 'package:eq_raid_boss/Providers/char_log_file_variables.dart';
+import 'package:eq_raid_boss/Providers/chat_channel_loots_provider.dart';
 import 'package:eq_raid_boss/Providers/refresh_ticks_variable.dart';
 import 'package:eq_raid_boss/Providers/shared_preferences_provider.dart';
 import 'package:eq_raid_boss/Widgets/blocked_items_widget.dart';
+import 'package:eq_raid_boss/Widgets/chat_channel_linked_loots_widget.dart';
 import 'package:eq_raid_boss/Widgets/dkp_ticks_widget.dart';
 import 'package:eq_raid_boss/Widgets/item_loots_widget.dart';
 import 'package:eq_raid_boss/Widgets/parcel_sender/parcel_sender.dart';
@@ -78,10 +81,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     start = DateTime.fromMillisecondsSinceEpoch(DateTime.now().millisecondsSinceEpoch - 28800000);
     end = DateTime.now();
     startTime = DateFormat('EEE, MMM d y, h:mm a').format(start);
-    if(charLogFile != ""){
+    if (charLogFile != "") {
       int underscoreIndex = charLogFile.indexOf('_');
       thisPlayerName = charLogFile.substring(underscoreIndex + 1, charLogFile.indexOf('_', underscoreIndex + 1));
-    }else{
+    } else {
       prefs.setString('characterLogFile', "");
     }
     timer = Timer.periodic(const Duration(milliseconds: 300), (timer) {
@@ -100,6 +103,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     prefs.get('eqDirectory') ?? prefs.setString('eqDirectory', '');
     prefs.get('characterLogFile') ?? prefs.setString('characterLogFile', '');
     prefs.getStringList('blockedItems') ?? prefs.setStringList('blockedItems', <String>[]);
+    prefs.getString('chatChannel') ?? prefs.setString('chatChannel', '');
+    ref.read(chatChannelProvider.notifier).setChatChannel(channel: prefs.getString('chatChannel')!);
     ref.read(blockedItemsVariableProvider).blockedItems = prefs.getStringList('blockedItems')!;
     ref.read(blockedItemsVariableProvider).blockedItems.sort();
     return Scaffold(
@@ -114,26 +119,31 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           ],
         ),
         DefaultTabController(
-            length: 5,
+            length: 6,
             initialIndex: 0,
             child: Expanded(
               child: Scaffold(
-                appBar: const TabBar(
-                  labelColor: Colors.black,
-                  tabs: [
-                    Tab(icon: Text('Loots')),
-                    Tab(icon: Text('Blocked Loots')),
-                    Tab(icon: Text('DKP Ticks')),
-                    Tab(icon: Text('Plat Parcels Received')),
-                    Tab(icon: Text('Plat Parcel Sender'))
-                  ],
+                appBar: AppBar(
+                  bottom: const TabBar(
+                    isScrollable: true,
+                    labelColor: Colors.black,
+                    tabs: [
+                      Tab(icon: Text('Loots')),
+                      Tab(icon: Text('Chat Channel Loots')),
+                      Tab(icon: Text('Blocked Loots')),
+                      Tab(icon: Text('DKP Ticks')),
+                      Tab(icon: Text('Plat Parcels Received')),
+                      Tab(icon: Text('Plat Parcel Sender'))
+                    ],
+                  ),
                 ),
                 body: TabBarView(children: [
-                  ItemLoots(
+                  ItemLootsWidget(
                     prefs: prefs,
                     start: start,
                     end: end,
                   ),
+                  ChatChannelLinkedLootsWidget(prefs: prefs),
                   BlockedItems(prefs: prefs),
                   DKPTicks(
                     prefs: prefs,
@@ -305,11 +315,13 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         startOffset = 0;
       }
       int endOffset = fileLength + 1;
-      List<PlatParcel> parcels = [];
-      List<SentPlatParcel> sentParcels = [];
+      final List<PlatParcel> parcels = [];
+      final List<SentPlatParcel> sentParcels = [];
       int totalStartTime = DateTime.now().millisecondsSinceEpoch;
-      List<String> newItemLines = [];
-      List<ItemLoot> newGivenLoots = [];
+      final List<String> newItemLines = [];
+      final List<ItemLoot> newGivenLoots = [];
+      final List<String> newChatChannelLines = [];
+      final String chatChannelName = ref.read(chatChannelProvider);
       await Future.doWhile(() async {
         Stream<String> lines = logFile!
             .openRead(startOffset, endOffset)
@@ -327,14 +339,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               firstLineOffset = line.length + 15;
               firstLine = false;
             }
-            if ((bmhContains(pattern: '[', text: line, algo: algo) && bmhContains(pattern: ']', text: line, algo: algo)) && !firstLine) {
+            if ((bmhContains(pattern: '[', text: line, algo: algo) &&
+                    bmhContains(pattern: ']', text: line, algo: algo)) &&
+                !firstLine) {
               DateTime lineTime = _getLineTime(line: line);
               //end while loop if time is before start time
               if (lineTime.millisecondsSinceEpoch < start.millisecondsSinceEpoch) {
                 startOffset = -1;
               }
               //check if item has been given
-              if (((bmhContains(pattern: ' roll on ', text: line, algo: algo) && bmhContains(pattern: ' won the ', text: line, algo: algo) && bmhContains(pattern: ' with a roll of ', text: line, algo: algo)) ||
+              if (((bmhContains(pattern: ' roll on ', text: line, algo: algo) &&
+                          bmhContains(pattern: ' won the ', text: line, algo: algo) &&
+                          bmhContains(pattern: ' with a roll of ', text: line, algo: algo)) ||
                       bmhContains(pattern: ' was given to ', text: line, algo: algo) ||
                       bmhContains(pattern: ' were given to ', text: line, algo: algo)) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
@@ -342,13 +358,23 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 newGivenLoots.addAll(_handleLootGiven(line, lineTime));
               }
               //itemloot lines
-              if ((bmhContains(pattern: '--You have looted ', text: line, algo: algo) || (bmhContains(pattern: '--', text: line, algo: algo) && bmhContains(pattern: ' has looted ', text: line, algo: algo))) &&
+              if ((bmhContains(pattern: '--You have looted ', text: line, algo: algo) ||
+                      (bmhContains(pattern: '--', text: line, algo: algo) &&
+                          bmhContains(pattern: ' has looted ', text: line, algo: algo))) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 newItemLines.add(line);
               }
+              //chatChannelLoot lines
+              if (chatChannelName.isNotEmpty &&
+                  (bmhContains(pattern: '$chatChannelName:', text: line, algo: algo)) &&
+                  (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
+                  (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
+                newChatChannelLines.add(line);
+              }
               //parcel lines
-              if (bmhContains(pattern: ' hands you the Money ', text: line, algo: algo)  && bmhContains(pattern: ' that was sent from ', text: line, algo: algo) &&
+              if (bmhContains(pattern: ' hands you the Money ', text: line, algo: algo) &&
+                  bmhContains(pattern: ' that was sent from ', text: line, algo: algo) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -359,7 +385,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 parcels.add(PlatParcel(sender: sender, amount: amount, time: lineTime));
               }
               //parcels sent
-              if (bmhContains(pattern: ' told you, \'I will deliver the Money ', text: line, algo: algo) && bmhContains(pattern: " as soon as possible!\'", text: line, algo: algo) &&
+              if (bmhContains(pattern: ' told you, \'I will deliver the Money ', text: line, algo: algo) &&
+                  bmhContains(pattern: " as soon as possible!'", text: line, algo: algo) &&
                   (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
                   (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
                 int amount = 0;
@@ -393,6 +420,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       });
       ref.read(charLogFileVariableProvider).itemLoots.addAll(newGivenLoots);
       _buildItemLoots(itemLines: newItemLines);
+      _buildChatChannelItems(newChatChannelLines: newChatChannelLines);
       print('Total time: ${(DateTime.now().millisecondsSinceEpoch - totalStartTime) / 1000} secs');
       ref
           .read(charLogFileVariableProvider)
@@ -408,6 +436,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       List<String> newLines = [];
       List<PlatParcel> parcels = ref.read(charLogFileVariableProvider).platParcels;
       List<SentPlatParcel> sentParcels = ref.read(charLogFileVariableProvider).sentPlatParcels;
+      final List<String> newChatChannelLines = [];
+      final String chatChannelName = ref.read(chatChannelProvider);
       Stream<String> lines = logFile!
           .openRead(byteOffSet)
           .transform(utf8.decoder) // Decode bytes to UTF-8.
@@ -432,6 +462,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
             //handle multiple items dropping
             newLines.add(line);
+          }
+          //chatChannelLoot lines
+          if ((bmhContains(pattern: '$chatChannelName:', text: line, algo: 1)) &&
+              (lineTime.millisecondsSinceEpoch > start.millisecondsSinceEpoch) &&
+              (lineTime.millisecondsSinceEpoch < end.millisecondsSinceEpoch)) {
+            newChatChannelLines.add(line);
           }
           //parcel lines
           if (line.contains(RegExp(r'^\[.*\].* hands you the Money \(\d+p\) that was sent from .*$')) &&
@@ -464,6 +500,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         log('Error: $e');
       }
       _buildItemLoots(itemLines: newLines);
+      _buildChatChannelItems(newChatChannelLines: newChatChannelLines);
       ref.read(charLogFileVariableProvider).byteOffset = fileLength;
       ref.read(charLogFileVariableProvider).isProcessing = false;
     }
@@ -610,5 +647,60 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
     }
     //trigger ui update
     ref.read(charLogFileVariableProvider).itemLoots.addAll(itemLootsToAdd);
+  }
+
+  void _buildChatChannelItems({required List<String> newChatChannelLines}) {
+    List<ChatChannelLoot> chatChannelLootsToAdd = [];
+    String chatChannel = ref.read(chatChannelProvider);
+    RegExp iLinked = RegExp('You tell $chatChannel:\\d, \'');
+    RegExp someoneElseLinked = RegExp('\\w tells $chatChannel:\\d, \'');
+    const Uuid uuid = Uuid();
+    for (var line in newChatChannelLines) {
+      //time
+      DateTime time = _getLineTime(line: line);
+      if (iLinked.hasMatch(line)) {
+        Match match = iLinked.firstMatch(line)!;
+        int end = match.end;
+        String subString = line.substring(end, line.indexOf('\'', end)).trim();
+        bool done = false;
+        int curStart = 0;
+        while (!done) {
+          int indexNext = subString.indexOf('|', curStart);
+          String item = subString.substring(curStart, indexNext > 0 ? indexNext : null);
+          item = item.trim();
+          if (item.length > 2) {
+            chatChannelLootsToAdd
+                .add(ChatChannelLoot(time: time, linkedBy: thisPlayerName, id: uuid.v4(), itemName: item));
+          }
+
+          curStart = indexNext + 1;
+          if ((curStart < 1) || (subString.length < (curStart + 3))) {
+            done = true;
+          }
+        }
+      } else if (someoneElseLinked.hasMatch(line)) {
+        Match match = someoneElseLinked.firstMatch(line)!;
+        int end = match.end;
+        String whoLinked = line.substring(line.indexOf(']') + 2, line.indexOf(' tells'));
+        String subString = line.substring(end, line.indexOf('\'', end)).trim();
+        bool done = false;
+        int curStart = 0;
+        while (!done) {
+          int indexNext = subString.indexOf('|', curStart);
+          String item = subString.substring(curStart, indexNext > 0 ? indexNext : null);
+          item = item.trim();
+          if (item.length > 2) {
+            chatChannelLootsToAdd.add(ChatChannelLoot(time: time, linkedBy: whoLinked, id: uuid.v4(), itemName: item));
+          }
+
+          curStart = indexNext + 1;
+          if ((curStart < 1) || (subString.length < (curStart + 3))) {
+            done = true;
+          }
+        }
+      }
+    }
+    //trigger ui update
+    ref.read(charLogFileVariableProvider).chatChannelLoots.addAll(chatChannelLootsToAdd);
   }
 }
